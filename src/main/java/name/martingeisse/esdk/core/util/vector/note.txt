@@ -1,0 +1,5 @@
+
+Implementation note: The classes in this package rely on the rule that a vector is always represented by the "most
+appropriately sized vector class". That is, for example, a vector of size at most 64 is never represented by a
+BigVector. This simplifies many operations, especially those that expect an "other operand" whose size is the same
+as the first operand.

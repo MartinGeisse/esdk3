@@ -1,0 +1,5 @@
+
+all int parameters -> unsigned
+all less-than / greater-than comparisons -> unsigned
+-
+unless explicitly specified as signed!

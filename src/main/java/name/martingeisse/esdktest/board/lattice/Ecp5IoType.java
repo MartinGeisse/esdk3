@@ -1,0 +1,38 @@
+package name.martingeisse.esdktest.board.lattice;
+
+public enum Ecp5IoType {
+    LVDS,
+    LVDS25E,
+    BLVDS25,
+    BLVDS25E,
+    LVPECL33,
+    LVPECL33E,
+    MLVDS,
+    MLVDS25E,
+    SLVS,
+    SUBLVDS,
+    HSUL12,
+    HSUL12D,
+    SSTL15_I,
+    SSTL15_II,
+    SSTL15D_I,
+    SSTL15D_II,
+    SSTL135_I,
+    SSTL135_II,
+    SSTL135D_I,
+    SSTL135D_II,
+    SSTL18_I,
+    SSTL18_II,
+    SSTL18D_I,
+    SSTL18D_II,
+    LVTTL33D,
+    LVTTL33,
+    LVCMOS33,
+    LVCMOS25, // this is the default according to Lattice docs
+    LVCMOS18,
+    LVCMOS15,
+    LVCMOS12,
+    LVCMOS33D,
+    LVCMOS25D,
+    LVCMOS18D
+}

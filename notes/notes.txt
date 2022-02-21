@@ -1,0 +1,15 @@
+
+(ok) toplevel-Klassen
+(ok) sonst util
+(ok) component
+(ok) library
+(ok) tools, außer
+
+(TODO) alles was mit der DSL zu tun hat
+(TODO) alles was mit verilog zu tun hat, auch in den (ok) packages
+
+
+längerfristig:
+- Klassen nach Use-Case aufteilen, z.B. macht SimulatedSettable*Signal nicht als Teil eines Modells, aber als Teil
+    einer Testbench sinn. Im Modell hat es keinen Vorteil gegenüber Simulated*Register und verleitet noch dazu,
+    den Ausgabewert während computeNextState() zu setzen, was man ja nicht darf.

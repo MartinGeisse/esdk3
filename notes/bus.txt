@@ -1,0 +1,14 @@
+
+Using a simplified bus because Wishbone is over-engineered for simple systems:
+
+sys clock
+sys bit reset
+
+m2s bit enable
+m2s bit write
+m2s vec 30 wordAddress
+m2s vec 32 writeData
+m2s vec 4 writeMask
+
+s2m bit acknowledge
+s2m vec 32 readData

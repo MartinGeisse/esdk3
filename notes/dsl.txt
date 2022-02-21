@@ -1,0 +1,88 @@
+
+Do-block DSL. How to declare registers? Big problem: These registers must be visible outside the do-block!
+Why not use a single do-block for the whole module? Because there might be different clock domains. But usually
+there aren't, and it would be foolish to optimize for that rare case. It is actually strange that non-clocked
+signals and module ports act as if they are not part of a clock domain. Verilog does this because it is not
+entirely convided that it is an RTL language. ESDK is.
+
+Multi-domain then poses a problem. Why do we want components again? Because we want cleanly defined re-use, and
+re-usable components.
+
+"do-blocks" are a strange concept. Why does a register belong to a do-block? It belongs to a clock domain. We can
+easily create any number of registers that belong to the same clock domain and enforce encapsulation by giving
+access to those register objects, not through do-blocks.
+- do-blocks came into existence as the unit of *write* access to a register, because allowing unrestricted write
+    access means that we may have multiple assignments to a register with no defined order.
+    - but we can solve that: we have "something" like a do-block but the register is outside, and only one such block
+        may assign to it
+    - then the block does not need to refer to the clock. The registers already do. The block just needs to
+        assign to the registers.
+        === should the registers refer to the clock? Or should the do-block make that connection?
+    - why statements at all then? This "synchronous block" is like a do(*) block, and its cases are like a
+        switch expression. Why statements at all? Just have register objects. Is that easier?
+    - The DSL allows nested when() calls. This is a DSL to combine clock enables through nesting. Still useful.
+
+variant 1: registers know their clock, and the nesting builds the enables. Branches without assignment keep the old
+    value. This is a DSL to describe next-value expressions.
+variant 2: registers get to know their clock from a do-block that assigns to them, just like MaHDL and Verilog.
+    -> I actually like this better, it's more intuitive when you know Verilog or MaHDL.
+
+DSL:
+var x = bitReg();
+var y = vectorReg(8);
+on(clk, () -> {
+    when(x, () -> {
+        y.set(y.add(1));
+    });
+});
+
+Affected code: only the "procedural" package and the component DSL.
+
+Are components still a good mechanism for re-use and encapsulation?
+- if not components, how would you instantiate re-usable code? Probably lots of signal connectors.
+    Components do just that, possibly in a cleaner way.
+    They also make sure that the DSL internal processing state is encapsulated, so two independent
+        re-usable code pieces do not disturb each other.
+- whether the strict nesting from components is useful is open for debate. Right now, it is
+    not used anyway.
+    - Dependency injection violates strict nesting. Not even violate directly, but extend its meaning:
+        implementation elements like registers, do-blocks and so on are strictly directly inside one
+        component. But a component may not have a single clearly-defined parent, but rather cross
+        the boundaries of components.
+
+---------------------------------------------------------------------------------------------------------------------
+
+The port DSL is not cool yet. Especially for clock ports, calling .back() all the time is totally ugly!
+
+Idea: accept a clockPort in on() and check if it is called from the right component.
+    -> only solves this for clock ports. For bit ports, it's still ugly. We'd basically have to implement this
+    for every DSL method, but even then, it is not supported for anything user-provided. Not good.
+
+OTOH, just using symmetrical signal connectors is not nice either, because there is no indication which are input
+ports and which are output ports.
+
+What about reflection magic? Each implementation element knows its parent component. Nesting is taken into account
+because when a module takes an input port and a submodule uses that as an input too, it is routed through a second,
+nested input port. A problem occurs when an input port is connected to an input port, because modules may violate
+the nesting -- apart from that, any primitive implementation element can check its signal sources and make sure
+that any port in the sources has the same parent component -- then, ports use the same mechanics as signal
+connectors but use specialized post-construction validation checks.
+
+==>
+
+- Input Ports are basically SignalConnectors (possibly a subclass that has the same functionality but expresses
+    the input port convention better, and possibly uses different error output if not connected)
+    - may use default-connected signals
+- Output ports are just signals made public
+- all ports should be exposed through public final fields (convention only, e.g. bus interfaces are more complex,
+    so this cannot be formally checked, at least not in all cases)
+- constructor initializes all ports as well as internal logic. All inputs needed for that are decoupled through
+    input ports (=connectors).
+    - no special post-construction logic needed
+- may obtain stack tracs (by creating exception objects) in the input port constructors to find places where they
+    should have been connected. This tracing should be enabled by default -- has no effect on simulation performance,
+    and can be turned off if it affects unit test performance, but very useful and it would be a shame if somebody
+    misses that just because they are off by default. Performance tuning can be a separate manual section where this
+    switch is mentioned.
+
+
