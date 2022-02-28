@@ -1,27 +1,117 @@
 package name.martingeisse.esdktest.designs;
 
+import name.martingeisse.esdk.core.Design;
 import name.martingeisse.esdk.core.component.Component;
+import name.martingeisse.esdk.core.library.clocked.Clock;
+import name.martingeisse.esdk.core.library.signal.BitConstant;
 import name.martingeisse.esdk.core.library.signal.ClockSignal;
+import name.martingeisse.esdk.core.library.signal.VectorConstant;
 import name.martingeisse.esdk.core.library.signal.connector.ClockConnector;
+import name.martingeisse.esdk.core.library.simulation.ClockGenerator;
 import name.martingeisse.esdktest.board.lattice.Ecp5IoType;
 import name.martingeisse.esdktest.board.orange_crab.OrangeCrabDesign;
 import name.martingeisse.esdktest.board.orange_crab.OrangeCrabIoPins;
 import name.martingeisse.esdktest.designs.components.Blinker;
-import name.martingeisse.esdktest.designs.components.CharacterDisplay;
+import name.martingeisse.esdktest.designs.components.character.CharacterDisplay;
 import name.martingeisse.esdktest.designs.components.SimplePll;
 import name.martingeisse.esdktest.designs.components.bus.BusMasterInterface;
+import name.martingeisse.esdktest.designs.components.bus.SingleSlaveDirectConnection;
+import name.martingeisse.esdktest.designs.components.character.SimulationCharacterDisplay;
+import name.martingeisse.esdktest.designs.components.character.SimulationCharacterDisplayPanel;
+import name.martingeisse.esdktest.designs.components.vga.Monitor;
+import name.martingeisse.esdktest.designs.components.vga.MonitorPanel;
 
 import java.io.File;
 
+@SuppressWarnings("RedundantThrows")
 public class BusHelloWorldMain extends Component {
 
     public static void main(String[] args) throws Exception {
-        OrangeCrabDesign design = new OrangeCrabDesign();
-        ClockSignal clock = SimplePll.create(design.createClockPin(), 2, 24, 25);
+        // highlevelSimulationMain(args);
+        // lowlevelSimulationMain(args);
+        synthesisMain(args);
+    }
+
+    public static void highlevelSimulationMain(String[] args) {
 
         //
-        // toplevel components
+        // design and toplevel components
         //
+
+        Design design = new Design();
+        Clock clock = new Clock(new BitConstant(false));
+        new ClockGenerator(clock, 40);
+
+        SimulationCharacterDisplay characterDisplay = new SimulationCharacterDisplay();
+        characterDisplay.clock.connect(clock);
+
+        Writer writer = new Writer();
+        writer.clock.connect(clock);
+
+        SingleSlaveDirectConnection.build(writer.bus, characterDisplay.bus);
+
+        //
+        // simulation window
+        //
+
+        SimulationCharacterDisplayPanel displayPanel = new SimulationCharacterDisplayPanel(characterDisplay);
+        SimulationCharacterDisplayPanel.openWindow(displayPanel, "BusHelloWorld");
+
+        //
+        // simulate this design!
+        //
+
+        design.simulate();
+    }
+
+    public static void lowlevelSimulationMain(String[] args) {
+
+        //
+        // design and toplevel components
+        //
+
+        Design design = new Design();
+        Clock clock = new Clock(new BitConstant(false));
+        new ClockGenerator(clock, 40);
+
+        CharacterDisplay characterDisplay = new CharacterDisplay();
+        characterDisplay.clock.connect(clock);
+
+        Writer writer = new Writer();
+        writer.clock.connect(clock);
+
+        SingleSlaveDirectConnection.build(writer.bus, characterDisplay.bus);
+
+        //
+        // simulation window
+        //
+
+        Monitor monitor = new Monitor();
+        monitor.clock.connect(clock);
+        monitor.r.connect(characterDisplay.r.concat(new VectorConstant(5, 0)));
+        monitor.g.connect(characterDisplay.g.concat(new VectorConstant(5, 0)));
+        monitor.b.connect(characterDisplay.b.concat(new VectorConstant(5, 0)));
+        monitor.hsync.connect(characterDisplay.hsync);
+        monitor.vsync.connect(characterDisplay.vsync);
+
+        MonitorPanel monitorPanel = new MonitorPanel(monitor, 800, 525, 1);
+        MonitorPanel.openWindow(monitorPanel, "BusHelloWorld");
+
+        //
+        // simulate this design!
+        //
+
+        design.simulate();
+    }
+
+    public static void synthesisMain(String[] args) throws Exception {
+
+        //
+        // design and toplevel components
+        //
+
+        OrangeCrabDesign design = new OrangeCrabDesign();
+        ClockSignal clock = SimplePll.create(design.createClockPin(), 2, 24, 25);
 
         Blinker blinker = new Blinker();
         blinker.clock.connect(clock);
@@ -30,8 +120,9 @@ public class BusHelloWorldMain extends Component {
         characterDisplay.clock.connect(clock);
 
         Writer writer = new Writer();
+        writer.clock.connect(clock);
 
-
+        SingleSlaveDirectConnection.build(writer.bus, characterDisplay.bus);
 
         //
         // pins

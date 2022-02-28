@@ -1,10 +1,7 @@
 package name.martingeisse.esdktest.designs.components.bus;
 
 import name.martingeisse.esdk.core.component.Component;
-import name.martingeisse.esdk.core.library.signal.BitConstant;
-import name.martingeisse.esdk.core.library.signal.BitSignal;
-import name.martingeisse.esdk.core.library.signal.VectorConstant;
-import name.martingeisse.esdk.core.library.signal.VectorSignal;
+import name.martingeisse.esdk.core.library.signal.*;
 import name.martingeisse.esdk.core.library.signal.connector.BitConnector;
 import name.martingeisse.esdk.core.library.signal.connector.VectorConnector;
 
@@ -25,6 +22,21 @@ public final class BusSlaveInterface {
         wordAddress = busSlave.inVector(localAddressBits);
         writeData = busSlave.inVector(writeDataBits);
         writeMask = busSlave.inVector(4);
+    }
+
+    /**
+     * This method ensures that the component which provides a bus master interface has correctly constructed it.
+     * It does NOT validate whether all signals are connected to a bus.
+     */
+    public void validateConstructedCorrectly() {
+        checkMissing(acknowledge, "acknowledge");
+        checkMissing(readData, "readData");
+    }
+
+    private void checkMissing(Signal signal, String what) {
+        if (signal == null) {
+            throw new RuntimeException(getClass().getSimpleName() + " was not constructed correcly -- missing " + what);
+        }
     }
 
     /**

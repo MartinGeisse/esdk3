@@ -1,0 +1,5 @@
+
+Note: These header files must not be included by firmware code. They contain conflicting symbol definitions: For
+example, "delay" is a function in firmware code. In this (exported) folder, it is defined as a global
+variable that contains a pointer to the actual function. As a bridge, the builtin.S file defines this variable by
+setting a symbol manually, and start.S allocates the memory for the variable and places the function address in it.

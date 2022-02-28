@@ -1,17 +1,12 @@
 package name.martingeisse.esdktest.designs;
 
 import name.martingeisse.esdk.core.component.Component;
-import name.martingeisse.esdk.core.library.blackbox.BlackboxInstance;
-import name.martingeisse.esdk.core.library.clocked.Clock;
-import name.martingeisse.esdk.core.library.signal.BitSignal;
 import name.martingeisse.esdk.core.library.signal.ClockSignal;
-import name.martingeisse.esdk.core.library.signal.VectorSignal;
-import name.martingeisse.esdk.core.library.signal.connector.ClockConnector;
 import name.martingeisse.esdktest.board.lattice.Ecp5IoType;
 import name.martingeisse.esdktest.board.orange_crab.OrangeCrabDesign;
 import name.martingeisse.esdktest.board.orange_crab.OrangeCrabIoPins;
 import name.martingeisse.esdktest.designs.components.Blinker;
-import name.martingeisse.esdktest.designs.components.CharacterDisplay;
+import name.martingeisse.esdktest.designs.components.character.CharacterDisplay;
 import name.martingeisse.esdktest.designs.components.SimplePll;
 
 import java.io.File;

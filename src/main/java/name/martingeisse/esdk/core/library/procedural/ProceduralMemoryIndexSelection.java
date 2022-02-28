@@ -14,7 +14,11 @@ import name.martingeisse.esdk.core.tools.synthesis.verilog.expression.VerilogExp
 import name.martingeisse.esdk.core.util.vector.Vector;
 
 /**
- *
+ * TODO implement fractional-size memory. If memory size is not exactly 2^N rows, then the writing the missing
+ * rows should be a no-OP and reading them should be a don't care. Only implement the case of missing rows at the
+ * end. Ingore how this gets mapped to FPGA primitives because this way it's much easier to express -- knowing
+ * that doing it wrong will still allocate 2^N rows. Make all this with an enable switch so it doesn't happen by
+ * accident.
  */
 public final class ProceduralMemoryIndexSelection extends DesignItem implements VectorSignal, DesignItemOwned {
 

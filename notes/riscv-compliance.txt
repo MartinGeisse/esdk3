@@ -1,0 +1,10 @@
+For the toolchain, the binaries must be in the search path and the compiler prefix is defined on the make line. The default value for this is
+
+    RISCV_PREFIX ?= riscv64-unknown-elf-
+
+The path to the RUN_TARGET is defined within the riscv-target Makefile.include.
+
+To run the rv32i test suite on riscvOVPsim
+
+    make RISCV_TARGET=riscvOVPsim RISCV_DEVICE=rv32i
+

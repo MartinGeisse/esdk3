@@ -1,0 +1,76 @@
+.option norvc
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// divrem
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+.globl udivrem
+.set udivrem, 8
+
+.globl udiv
+.set udiv, 12
+
+.globl urem
+.set urem, 16
+
+.globl div
+.set div, 20
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// term
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+.globl termInitialize
+.set termInitialize, 24
+
+.globl termPrintString
+.set termPrintString, 28
+
+.globl termPrintChar
+.set termPrintChar, 32
+
+.globl termPrintInt
+.set termPrintInt, 36
+
+.globl termPrintUnsignedInt
+.set termPrintUnsignedInt, 40
+
+.globl termPrintHexInt
+.set termPrintHexInt, 44
+
+.globl termPrintUnsignedHexInt
+.set termPrintUnsignedHexInt, 48
+
+.globl termPrintln
+.set termPrintln, 52
+
+.globl termPrintlnString
+.set termPrintlnString, 56
+
+.globl termPrintlnChar
+.set termPrintlnChar, 60
+
+.globl termPrintlnInt
+.set termPrintlnInt, 64
+
+.globl termPrintlnUnsignedInt
+.set termPrintlnUnsignedInt, 68
+
+.globl termPrintlnHexInt
+.set termPrintlnHexInt, 72
+
+.globl termPrintlnUnsignedHexInt
+.set termPrintlnUnsignedHexInt, 76
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// profiling
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+.globl profReset
+.set profReset, 80
+
+.globl profLog
+.set profLog, 84
+
+.globl profDisplay
+.set profDisplay, 88

@@ -1,0 +1,47 @@
+OUTPUT_FORMAT("elf32-littleriscv", "elf32-littleriscv", "elf32-littleriscv")
+OUTPUT_ARCH(riscv)
+ENTRY(_start)
+SECTIONS {
+    . = 0;
+    .image : {
+
+        /* we need the real .text first because it contains the implicit entry point */
+        *(.text .stub .text.* .gnu.linkonce.t.*)
+
+        /* other text */
+        *(.text.unlikely .text.*_unlikely .text.unlikely.*)
+        *(.text.exit .text.exit.*)
+        *(.text.startup .text.startup.*)
+        *(.text.hot .text.hot.*)
+        *(SORT(.text.sorted.*))
+        *(.gnu.warning)
+        *(.text.trap)
+        *(.text.init)
+
+        /* data */
+        *(.rodata .rodata.* .gnu.linkonce.r.*)
+        *(.data .data.* .gnu.linkonce.d.*)
+        *(.srodata.cst16) *(.srodata.cst8) *(.srodata.cst4) *(.srodata.cst2) *(.srodata .srodata.*)
+        *(.sdata .sdata.* .gnu.linkonce.s.*)
+
+        /* bss */
+        *(.dynsbss)
+        *(.sbss .sbss.* .gnu.linkonce.sb.*)
+        *(.scommon)
+        *(.dynbss)
+        *(.bss .bss.* .gnu.linkonce.b.*)
+        *(COMMON)
+
+        /* test support */
+        *(.tohost)
+
+    }
+
+    /DISCARD/ : {
+        *(*)
+    }
+
+    /* this should prevent implicit use of the global pointer -- it's too far away from address 0 */
+    __global_pointer$ = 0x80000000;
+
+}

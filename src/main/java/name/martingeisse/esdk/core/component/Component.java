@@ -254,6 +254,24 @@ public abstract class Component extends DesignItem {
 
     // endregion
 
+    // region shifting
+
+    public final VectorSignal shiftLeft(VectorSignal shifted, VectorSignal amount, BitSignal in) {
+        int shiftLimit = 1 << amount.getWidth(); // (max shift amount) + 1
+        VectorSignal extended = concat(shifted, repeat(shiftLimit, in));
+        VectorSignal shiftOperation = new ShiftOperation(ShiftOperation.Direction.LEFT, extended, amount);
+        return select(shiftOperation, shiftOperation.getWidth() - 1, shiftLimit);
+    }
+
+    public final VectorSignal shiftRight(VectorSignal shifted, VectorSignal amount, BitSignal in) {
+        int shiftLimit = 1 << amount.getWidth(); // (max shift amount) + 1
+        VectorSignal extended = concat(repeat(shiftLimit, in), shifted);
+        VectorSignal shiftOperation = new ShiftOperation(ShiftOperation.Direction.RIGHT, extended, amount);
+        return select(shiftOperation, shifted.getWidth() - 1, 0);
+    }
+
+    // endregion
+
     // region generic comparison
 
     public final BitSignal compare(VectorSignal x, VectorComparison.Operator operator, VectorSignal y) {
@@ -294,6 +312,39 @@ public abstract class Component extends DesignItem {
 
     public final BitSignal eq(VectorSignal x, int y) {
         return compare(x, VectorComparison.Operator.EQUAL, y);
+    }
+
+    public final BitSignal isOneOf(VectorSignal x, VectorSignal... ys) {
+        BitSignal partialResult = constant(false);
+        if (ys.length == 0) {
+            return partialResult;
+        }
+        for (VectorSignal y : ys) {
+            partialResult = checkSameDesign(partialResult.or(eq(x, y)));
+        }
+        return partialResult;
+    }
+
+    public final BitSignal isOneOf(VectorSignal x, Vector... ys) {
+        BitSignal partialResult = constant(false);
+        if (ys.length == 0) {
+            return partialResult;
+        }
+        for (Vector y : ys) {
+            partialResult = checkSameDesign(partialResult.or(eq(x, y)));
+        }
+        return partialResult;
+    }
+
+    public final BitSignal isOneOf(VectorSignal x, int... ys) {
+        BitSignal partialResult = constant(false);
+        if (ys.length == 0) {
+            return partialResult;
+        }
+        for (int y : ys) {
+            partialResult = checkSameDesign(partialResult.or(eq(x, y)));
+        }
+        return partialResult;
     }
 
     // endregion compare/equal
@@ -373,11 +424,11 @@ public abstract class Component extends DesignItem {
     // region reduction
 
     public final BitSignal andReduce(VectorSignal signal) {
-        return eq(signal, repeat(true, signal.getWidth()));
+        return eq(signal, repeat(signal.getWidth(), true));
     }
 
     public final BitSignal orReduce(VectorSignal signal) {
-        return neq(signal, repeat(false, signal.getWidth()));
+        return neq(signal, repeat(signal.getWidth(), false));
     }
 
     public final BitSignal xorReduce(VectorSignal signal) {
@@ -394,19 +445,19 @@ public abstract class Component extends DesignItem {
         return new Concatenation(signals);
     }
 
-    public final VectorSignal repeat(boolean value, int repetitions) {
+    public final VectorSignal repeat(int repetitions, boolean value) {
         return new BitRepetition(constant(value), repetitions);
     }
 
-    public final VectorSignal repeat(BitSignal signal, int repetitions) {
+    public final VectorSignal repeat(int repetitions, BitSignal signal) {
         return new BitRepetition(signal, repetitions);
     }
 
-    public final VectorSignal repeat(Vector value, int repetitions) {
+    public final VectorSignal repeat(int repetitions, Vector value) {
         return new VectorRepetition(constant(value), repetitions);
     }
 
-    public final VectorSignal repeat(VectorSignal signal, int repetitions) {
+    public final VectorSignal repeat(int repetitions, VectorSignal signal) {
         return new VectorRepetition(signal, repetitions);
     }
 
@@ -642,6 +693,21 @@ public abstract class Component extends DesignItem {
     // endregion
 
     // TODO switch/case. DSL syntax not yet clear
+
+    public final void addCase(SwitchStatement switchStatement, Vector selectorValue, Runnable body) {
+        StatementSequence sequence = switchStatement.addCase(selectorValue);
+        nestedStatements(sequence, body);
+    }
+
+    public final void addCase(SwitchStatement switchStatement, Vector[] selectorValues, Runnable body) {
+        StatementSequence sequence = switchStatement.addCase(selectorValues);
+        nestedStatements(sequence, body);
+    }
+
+    public final void defaultCase(SwitchStatement switchStatement, Runnable body) {
+        nestedStatements(switchStatement.getDefaultBranch(), body);
+    }
+
 //    public final SwitchStatement switchOn(VectorSignal selector) {
 //        SwitchStatement switchStatement = new SwitchStatement(selector);
 //        addStatement(switchStatement);

@@ -1,0 +1,495 @@
+module name.martingeisse.esdk.riscv.rtl.Multicycle;
+
+interface {
+
+	// system signals
+	in clock clk;
+	in bit reset;
+
+	// bus interface
+	out bit busEnable;
+	out bit busWrite;
+	out vector[30] busWordAddress;
+	in vector[32] busReadData;
+	out vector[32] busWriteData;
+	out vector[4] busWriteMask;
+	in bit busAcknowledge;
+
+	// interrupts
+	in bit interrupt;
+
+}
+
+// --------------------------------------------------------------------------------------------------------------------
+// definitions
+// --------------------------------------------------------------------------------------------------------------------
+
+// state machine
+constant vector[5] STATE_START = 0;
+constant vector[5] STATE_FETCH = 1;
+constant vector[5] STATE_DECODE_AND_READ1 = 2;
+constant vector[5] STATE_DECODE_AND_READ2 = 3;
+constant vector[5] STATE_PREPARE_EXECUTION = 23;
+constant vector[5] STATE_EXEC_OP_0 = 4;
+constant vector[5] STATE_EXEC_OP_1 = 5;
+constant vector[5] STATE_EXEC_OP_2 = 6;
+constant vector[5] STATE_EXEC_OP_3 = 7;
+constant vector[5] STATE_PREPARE_BRANCH = 8;
+constant vector[5] STATE_EXEC_BRANCH = 9;
+constant vector[5] STATE_EXEC_LUI = 10;
+constant vector[5] STATE_EXEC_AUIPC = 11;
+constant vector[5] STATE_EXEC_JAL = 12;
+constant vector[5] STATE_EXEC_JALR = 13;
+constant vector[5] STATE_MEM_COMPUTE_ADDRESS = 14;
+constant vector[5] STATE_MEM_ACCESS = 15;
+constant vector[5] STATE_MEM_EXTEND = 16;
+constant vector[5] STATE_EXCEPTION = 17;
+constant vector[5] STATE_SYSTEM_INSTRUCTION = 18;
+constant vector[5] STATE_CSR_INSTRUCTION = 19;
+constant vector[5] STATE_WRITE_MISC_VALUE_TO_REGISTER = 20;
+constant vector[5] STATE_CUSTOM_INSTRUCTION = 21;
+constant vector[5] STATE_FINISH_EARLY_FETCH = 22;
+
+// CPU state
+register vector[5] state = STATE_START;
+register vector[32] pc = 0;
+register matrix[64][32] registers;
+register vector[32] instructionRegister; // TODO consider prefixing module ports with (interface.)portName to avoid these ugly local names (but sucks for clk)
+register vector[32] oldPc = 0;
+register vector[32] registerReadValue; // register reads go here
+register vector[32] firstRegisterValue; // first read value is stored here on second read
+register vector[32] aluImmediate;
+register vector[32] memoryAddressRegister;
+register vector[32] memoryReadDataRegister;
+register vector[32] miscRegisterWriteValue;
+
+// exception / interrupt handling
+register vector[32] exceptionHandlerReturnAddress;
+/*register*/ signal bit registerSetSelector = 0;
+
+// special registers including CSRs
+constant vector[5] EXCEPTION_NONE = 0;
+constant vector[5] EXCEPTION_INTERRUPT = 1;
+constant vector[5] EXCEPTION_INVALID_INSTRUCTION = 2;
+register vector[5] exceptionCode = 0;
+register bit enableInterrupts = 0;
+
+// --------------------------------------------------------------------------------------------------------------------
+// derived signals
+// --------------------------------------------------------------------------------------------------------------------
+
+// early fetching
+register bit earlyFetchStarted, earlyFetchFinished;
+register vector[32] earlyFetchResult;
+
+// decoding
+signal vector[5] opcode = instructionRegister[6:2];
+signal vector[6] sourceRegisterIndex1 = (registerSetSelector == instructionRegister[1]) _ instructionRegister[19:15];
+signal vector[6] sourceRegisterIndex2 = (registerSetSelector == instructionRegister[1]) _ instructionRegister[24:20];
+signal vector[6] destinationRegisterIndex = (registerSetSelector == instructionRegister[0]) _ instructionRegister[11:7];
+signal bit operationIsMulDev = (opcode[3] & instructionRegister[25]);
+
+// execution helpers
+signal vector[32] sourceValue1 = firstRegisterValue;
+register vector[32] sourceValue2; // set during STATE_PREPARE_EXECUTION
+signal bit isLTS = (~sourceValue1[31] _ sourceValue1[30:0]) < (~sourceValue2[31] _ sourceValue2[30:0]);
+signal bit isLTU = (sourceValue1 < sourceValue2);
+
+// memory interface
+register vector[32] memoryWriteDataRegister;
+do (*) {
+	busEnable = (state == STATE_MEM_ACCESS) | (state == STATE_FETCH) | (earlyFetchStarted & ~earlyFetchFinished);
+	busWrite = (state == STATE_MEM_ACCESS) & opcode[3];
+	busWordAddress = memoryAddressRegister[31:2];
+	busWriteData = memoryWriteDataRegister;
+	if (instructionRegister[13]) {
+		busWriteMask = 4b1111;
+	} else if (instructionRegister[12]) {
+		busWriteMask = memoryAddressRegister[1] ? 4b1100 : 4b0011;
+	} else {
+		busWriteMask = memoryAddressRegister[1] ? (memoryAddressRegister[0] ? 4b1000 : 4b0100) : (memoryAddressRegister[0] ? 4b0010 : 4b0001);
+	}
+}
+do (clk) {
+	// This assignment makes async paths shorter by adding decoupling registers, but it is only relevant in the
+	// STATE_MEM_COMPUTE_ADDRESS state. In that state, the registerReadValue has just been assigned its correct value,
+	// and the results are only needed in the next state, when memory access actually occurs.
+	// Note that we cannot do the same for the write mask since it depends on the address being computed in the
+	// relevant state, but timing is less tight for the mask, so it's okay.
+	if (instructionRegister[13]) {
+		memoryWriteDataRegister = registerReadValue;
+	} else if (instructionRegister[12]) {
+		memoryWriteDataRegister = registerReadValue[15:0] _ registerReadValue[15:0];
+	} else {
+		memoryWriteDataRegister = registerReadValue[7:0] _ registerReadValue[7:0] _ registerReadValue[7:0] _ registerReadValue[7:0];
+	}
+}
+
+// --------------------------------------------------------------------------------------------------------------------
+// ALU logic
+// --------------------------------------------------------------------------------------------------------------------
+
+// this register is loaded even before the first execution state, so it is ready when computing temporary results
+register bit rightShiftInBit;
+
+// state STATE_EXEC_OP_0 is used to perform this step
+register vector[32] leftShiftPreparationResult;
+register vector[32] multiplierPreparationResultLowLow;
+register vector[32] multiplierPreparationResultLowHigh;
+register vector[32] multiplierPreparationResultHighLow;
+do (clk) {
+	leftShiftPreparationResult = sourceValue1 << sourceValue2[2:0];
+	multiplierPreparationResultLowLow = (16d0 _ firstRegisterValue[15:0]) * (16d0 _ registerReadValue[15:0]);
+	multiplierPreparationResultLowHigh = (16d0 _ firstRegisterValue[15:0]) * (16d0 _ registerReadValue[31:16]);
+	multiplierPreparationResultHighLow = (16d0 _ firstRegisterValue[31:16]) * (16d0 _ registerReadValue[15:0]);
+}
+
+// I am using a temporary result register for now. From/to constraints do not work well with Xilinx tools (one of the
+// worst UIs I have ever seen...) and since the CPU should eventually be pipelined, an extra register will be needed
+// anyway and will become a pipeline register at that point.
+register vector[32] execOpTemporaryResultAddSub;
+register vector[32] execOpTemporaryResultShiftLeft;
+register bit execOpTemporaryResultLessThan;
+register vector[32] execOpTemporaryResultShiftRight;
+register vector[32] execOpTemporaryResultMul;
+do(clk) {
+	execOpTemporaryResultAddSub = (opcode[3] & instructionRegister[30]) ? (sourceValue1 - sourceValue2) : (sourceValue1 + sourceValue2);
+	execOpTemporaryResultShiftLeft = sourceValue2[3] ? (leftShiftPreparationResult[23:0] _ repeat(8, bit(0))) : leftShiftPreparationResult;
+	execOpTemporaryResultLessThan = (instructionRegister[12] ? isLTU : isLTS);
+	execOpTemporaryResultShiftRight = ((repeat(16, rightShiftInBit) _ sourceValue1) >> sourceValue2[3:0])[31:0]; // SRA / SRL
+	execOpTemporaryResultMul = multiplierPreparationResultLowLow + (multiplierPreparationResultLowHigh[15:0] _ 16d0) + (multiplierPreparationResultHighLow[15:0] _ 16d0);
+}
+
+register vector[32] execOpResult;
+do (clk) {
+	if (~operationIsMulDev) {
+		execOpResult = switch(instructionRegister[14:12]) {
+			case 3d0: execOpTemporaryResultAddSub // ADD / SUB
+			case 3d1: sourceValue2[4] ? (execOpTemporaryResultShiftLeft[15:0] _ repeat(16, bit(0))) : execOpTemporaryResultShiftLeft // SLL
+			case 3d2, 3d3: execOpTemporaryResultLessThan ? 32d1 : 32d0 // SLT, SLTU
+			case 3d4: sourceValue1 ^ sourceValue2 // XOR
+			case 3d5: sourceValue2[4] ? (repeat(16, rightShiftInBit) _ execOpTemporaryResultShiftRight[31:16]) : execOpTemporaryResultShiftRight // SRL, SRA
+			case 3d6: sourceValue1 | sourceValue2 // OR
+			case 3d7: sourceValue1 & sourceValue2 // AND
+		};
+	} else {
+		execOpResult = execOpTemporaryResultMul;
+	}
+}
+
+register bit partialBranchCondition;
+do (clk) {
+	partialBranchCondition = switch(instructionRegister[14:13]) {
+		case 2d0: sourceValue1 == sourceValue2 // BEQ
+		case 2d2: isLTS // BLT
+		case 2d3: isLTU // BLTU
+		default: bit(0)
+	};
+}
+
+// --------------------------------------------------------------------------------------------------------------------
+// zero/sign extension logic
+// --------------------------------------------------------------------------------------------------------------------
+
+// halfword-to-word extension
+signal bit halfwordToWordSignBit = memoryAddressRegister[1] ? memoryReadDataRegister[31] : memoryReadDataRegister[15];
+signal vector[16] halfwordToWordExtension = instructionRegister[14] ? 16d0 : repeat(16, halfwordToWordSignBit);
+signal vector[16] halfwordToWordData = memoryAddressRegister[1] ? memoryReadDataRegister[31:16] : memoryReadDataRegister[15:0];
+
+// byte-to-word extension
+signal bit byteToWordSignBit = switch (memoryAddressRegister[1:0]) {
+	case 2d0: memoryReadDataRegister[7]
+	case 2d1: memoryReadDataRegister[15]
+	case 2d2: memoryReadDataRegister[23]
+	case 2d3: memoryReadDataRegister[31]
+};
+signal vector[24] byteToWordExtension = instructionRegister[14] ? 24d0 : repeat(24, byteToWordSignBit);
+signal vector[8] byteToWordData = switch (memoryAddressRegister[1:0]) {
+	case 2d0: memoryReadDataRegister[7:0]
+	case 2d1: memoryReadDataRegister[15:8]
+	case 2d2: memoryReadDataRegister[23:16]
+	case 2d3: memoryReadDataRegister[31:24]
+};
+
+// --------------------------------------------------------------------------------------------------------------------
+// state machine
+// --------------------------------------------------------------------------------------------------------------------
+
+do (clk) {
+	if (reset) {
+		state = STATE_START;
+		pc = 0;
+		enableInterrupts = 0;
+	} else {
+		if (busAcknowledge) {
+			earlyFetchFinished = 1; // will be ignored for non-early-fetch ACKs
+			earlyFetchResult = busReadData;
+		}
+		switch (state) {
+
+			case STATE_START:
+                oldPc = pc;
+				memoryAddressRegister = pc;
+				if (enableInterrupts & interrupt) {
+					exceptionCode = EXCEPTION_INTERRUPT;
+					state = STATE_EXCEPTION;
+				} else {
+					state = STATE_FETCH;
+				}
+
+			case STATE_FETCH:
+				instructionRegister = busReadData;
+				if (busAcknowledge) {
+					state = STATE_DECODE_AND_READ1;
+					pc = pc + 32d4;
+				}
+
+			case STATE_FINISH_EARLY_FETCH:
+				// note: we could save another cycle by noticing memoryAcknowledge here directly, but we'd have to
+				// add more muxes for the other values.
+				if (earlyFetchFinished) {
+					earlyFetchStarted = 0;
+					earlyFetchFinished = 0;
+					oldPc = pc;
+					pc = pc + 32d4;
+					instructionRegister = earlyFetchResult;
+					if (enableInterrupts & interrupt) {
+						exceptionCode = EXCEPTION_INTERRUPT;
+						state = STATE_EXCEPTION;
+					} else {
+						state = STATE_DECODE_AND_READ1;
+					}
+				}
+
+			case STATE_DECODE_AND_READ1:
+				aluImmediate = repeat(20, instructionRegister[31]) _ instructionRegister[31:20];
+				state = STATE_DECODE_AND_READ2;
+
+			case STATE_DECODE_AND_READ2:
+				firstRegisterValue = registerReadValue;
+				rightShiftInBit = (instructionRegister[30] ? registerReadValue[31] : bit(0));
+				state = STATE_PREPARE_EXECUTION;
+
+			case STATE_PREPARE_EXECUTION:
+				sourceValue2 = opcode[3] ? registerReadValue : aluImmediate;
+				memoryAddressRegister = pc; // for early fetching
+				earlyFetchFinished = 0;
+				switch (opcode) {
+
+					case 5d0: // LOAD
+						state = STATE_MEM_COMPUTE_ADDRESS;
+
+					case 5d2: // custom-0
+						state = STATE_CUSTOM_INSTRUCTION;
+
+					case 5d3: // MISC-MEM
+						state = STATE_START;
+
+					case 5d4: // OP-IMM
+						earlyFetchStarted = 1;
+						state = (instructionRegister[14:12] == 3d1) ? STATE_EXEC_OP_0 : STATE_EXEC_OP_1;
+
+					case 5d5: // AUIPC
+						earlyFetchStarted = 1;
+						state = STATE_EXEC_AUIPC;
+
+					case 5d8: // STORE
+						state = STATE_MEM_COMPUTE_ADDRESS;
+
+					case 5d12: // OP
+						earlyFetchStarted = 1;
+						if (operationIsMulDev) {
+							state = (instructionRegister[14:12] == 3d0) ? STATE_EXEC_OP_0 : STATE_EXEC_OP_1;
+						} else {
+							state = (instructionRegister[14:12] == 3d1) ? STATE_EXEC_OP_0 : STATE_EXEC_OP_1;
+						}
+
+					case 5d13: // LUI
+						earlyFetchStarted = 1;
+						state = STATE_EXEC_LUI;
+
+					case 5d24: // BRANCH
+						state = STATE_PREPARE_BRANCH;
+
+					case 5d25: // JALR
+						state = STATE_EXEC_JALR;
+
+					case 5d27: // JAL
+						state = STATE_EXEC_JAL;
+
+					case 5d28: // SYSTEM
+						state = STATE_SYSTEM_INSTRUCTION;
+
+					default: // includes MISC-MEM (=NOP) and SYSTEM
+						state = STATE_EXCEPTION;
+						exceptionCode = EXCEPTION_INVALID_INSTRUCTION;
+
+				}
+
+			case STATE_EXEC_OP_0:
+				state = STATE_EXEC_OP_1;
+
+			case STATE_EXEC_OP_1:
+				if (operationIsMulDev & instructionRegister[14:12] != 3d0) {
+					state = STATE_EXCEPTION;
+					exceptionCode = EXCEPTION_INVALID_INSTRUCTION;
+				} else {
+					state = STATE_EXEC_OP_2;
+				}
+
+			case STATE_EXEC_OP_2:
+				state = STATE_EXEC_OP_3;
+
+			case STATE_EXEC_OP_3:
+				state = STATE_FINISH_EARLY_FETCH;
+
+			case STATE_PREPARE_BRANCH:
+				// this state loads partialBranchCondition
+				state = STATE_EXEC_BRANCH;
+
+			case STATE_EXEC_BRANCH:
+				if (partialBranchCondition ^ instructionRegister[12]) {
+					pc = oldPc + (repeat(20, instructionRegister[31]) _ instructionRegister[7] _ instructionRegister[30:25] _ instructionRegister[11:8] _ 1b0);
+				}
+				state = STATE_START;
+
+			case STATE_EXEC_LUI:
+				state = STATE_FINISH_EARLY_FETCH;
+
+			case STATE_EXEC_AUIPC:
+				state = STATE_FINISH_EARLY_FETCH;
+
+			case STATE_EXEC_JAL:
+				pc = oldPc + (repeat(12, instructionRegister[31]) _ instructionRegister[19:12] _ instructionRegister[20] _ instructionRegister[30:21] _ 1b0);
+				state = STATE_START;
+
+			case STATE_EXEC_JALR:
+				pc = (firstRegisterValue + (repeat(20, instructionRegister[31]) _ instructionRegister[31:20]))[31:1] _ 1b0;
+				state = STATE_START;
+
+			case STATE_MEM_COMPUTE_ADDRESS:
+				if (opcode[3]) {
+					memoryAddressRegister = firstRegisterValue + (repeat(20, instructionRegister[31]) _ instructionRegister[31:25] _ instructionRegister[11:7]);
+				} else {
+					memoryAddressRegister = firstRegisterValue + aluImmediate;
+				}
+				state = STATE_MEM_ACCESS;
+
+			case STATE_MEM_ACCESS:
+				memoryReadDataRegister = busReadData;
+				if (busAcknowledge) {
+					state = opcode[3] ? STATE_START : STATE_MEM_EXTEND;
+				}
+
+			case STATE_MEM_EXTEND:
+				state = STATE_START;
+
+			case STATE_EXCEPTION:
+				enableInterrupts = 0;
+				pc = 4;
+				// no register sets for now: registerSetSelector = 1;
+				exceptionHandlerReturnAddress = oldPc;
+                state = STATE_START;
+
+			case STATE_SYSTEM_INSTRUCTION:
+				switch(instructionRegister[14:12]) {
+
+					case 3b000, 3b100:
+						state = STATE_EXCEPTION;
+						exceptionCode = EXCEPTION_INVALID_INSTRUCTION;
+
+					default:
+						state = STATE_CSR_INSTRUCTION;
+
+				}
+
+			case STATE_CSR_INSTRUCTION:
+				miscRegisterWriteValue = 32h11335577;
+				state = STATE_WRITE_MISC_VALUE_TO_REGISTER;
+
+			case STATE_WRITE_MISC_VALUE_TO_REGISTER:
+				state = STATE_START;
+
+			case STATE_CUSTOM_INSTRUCTION:
+				switch (instructionRegister[29:26]) {
+
+					// read special register
+					case 4d0:
+						state = STATE_WRITE_MISC_VALUE_TO_REGISTER;
+						switch (instructionRegister[24:20]) {
+
+							case 5d0:
+								miscRegisterWriteValue = exceptionHandlerReturnAddress;
+
+							case 5d1:
+								miscRegisterWriteValue = 27d0 _ exceptionCode;
+
+							case 5d2:
+								miscRegisterWriteValue = 31d0 _ enableInterrupts;
+
+							default:
+								state = STATE_EXCEPTION;
+								exceptionCode = EXCEPTION_INVALID_INSTRUCTION;
+
+						}
+
+					// write special register
+					case 4d1:
+						state = STATE_START;
+						switch (instructionRegister[24:20]) {
+
+							case 5d0:
+								exceptionHandlerReturnAddress = firstRegisterValue;
+
+							case 5d1:
+								exceptionCode = firstRegisterValue[4:0];
+
+							case 5d2:
+								enableInterrupts = firstRegisterValue[0];
+
+							default:
+								state = STATE_EXCEPTION;
+								exceptionCode = EXCEPTION_INVALID_INSTRUCTION;
+
+						}
+
+					// leave exception handler
+					case 4d2:
+						state = STATE_START;
+						enableInterrupts = 1;
+						pc = exceptionHandlerReturnAddress;
+						// no register sets for now: registerSetSelector = 0;
+
+					default:
+						state = STATE_EXCEPTION;
+						exceptionCode = EXCEPTION_INVALID_INSTRUCTION;
+
+				}
+
+		}
+	}
+}
+
+// register file BlockRAM support
+signal vector[6] registersAddress = state == STATE_DECODE_AND_READ1 ? sourceRegisterIndex1 :
+		(state == STATE_DECODE_AND_READ2 | state == STATE_EXEC_OP_0 | state == STATE_EXEC_OP_1 |
+				state == STATE_PREPARE_EXECUTION | state == STATE_EXEC_OP_2) ? sourceRegisterIndex2 : destinationRegisterIndex;
+signal bit isRegisterWriteState = (state == STATE_EXEC_OP_3) | (state == STATE_EXEC_LUI) | (state == STATE_EXEC_AUIPC) |
+		(state == STATE_EXEC_JAL) | (state == STATE_EXEC_JALR) | (state == STATE_MEM_EXTEND) | (state == STATE_WRITE_MISC_VALUE_TO_REGISTER);
+signal vector[32] registerWriteValue = switch(state) {
+	case STATE_EXEC_OP_3: execOpResult
+	case STATE_EXEC_LUI: instructionRegister[31:12] _ 12d0
+	case STATE_EXEC_AUIPC: oldPc + (instructionRegister[31:12] _ 12d0)
+	case STATE_EXEC_JAL, STATE_EXEC_JALR: pc
+	case STATE_MEM_EXTEND: instructionRegister[13] ? memoryReadDataRegister : instructionRegister[12] ?
+			(halfwordToWordExtension _ halfwordToWordData) : (byteToWordExtension _ byteToWordData)
+	default: miscRegisterWriteValue
+};
+do(clk) {
+	if (state != STATE_MEM_COMPUTE_ADDRESS & state != STATE_MEM_ACCESS) {
+		registerReadValue = registers[registersAddress];
+		if (isRegisterWriteState & destinationRegisterIndex[4:0] != 5d0) {
+			registers[registersAddress] = registerWriteValue;
+		}
+	}
+}
