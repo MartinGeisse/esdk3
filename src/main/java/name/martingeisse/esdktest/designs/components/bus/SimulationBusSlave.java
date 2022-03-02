@@ -37,14 +37,13 @@ public abstract class SimulationBusSlave extends ClockedSimulationDesignItem {
 
     private static final Vector ZERO32 = Vector.of(32, 0);
 
-    private final BusSlaveInterface slaveInterface;
-
-    public boolean enable;
-    public boolean write;
-    public int wordAddress;
-    public int writeData;
-    public int writeMask;
-    public Vector readData;
+    public final BusSlaveInterface slaveInterface;
+    private boolean enable;
+    private boolean write;
+    private int wordAddress;
+    private int writeData;
+    private int writeMask;
+    private Vector readData;
 
     public SimulationBusSlave(ClockSignal clockSignal, BusSlaveInterface slaveInterface) {
         super(clockSignal);

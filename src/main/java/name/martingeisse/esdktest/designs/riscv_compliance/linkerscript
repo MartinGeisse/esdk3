@@ -1,11 +1,12 @@
 OUTPUT_FORMAT("elf32-littleriscv", "elf32-littleriscv", "elf32-littleriscv")
 OUTPUT_ARCH(riscv)
-ENTRY(_start)
+ENTRY(rvtest_entry_point)
 SECTIONS {
     . = 0;
     .image : {
 
-        /* we need the real .text first because it contains the implicit entry point */
+        /* we need .text.init first because it contains the implicit entry point */
+        *(.text.init)
         *(.text .stub .text.* .gnu.linkonce.t.*)
 
         /* other text */
@@ -16,7 +17,6 @@ SECTIONS {
         *(SORT(.text.sorted.*))
         *(.gnu.warning)
         *(.text.trap)
-        *(.text.init)
 
         /* data */
         *(.rodata .rodata.* .gnu.linkonce.r.*)

@@ -26,76 +26,76 @@ public final class RiscvCpu extends Component {
     // try to merge Vector and VectorConstant. Problem with this is the reference to the Design object
     // int cannot be a general representation because it is limited to 32 (long 64) bits
     // -> general idea: merge Vector and VectorConstant, then accept that and int everywhere
-    private final ProceduralVectorRegister state = vectorRegister(5, STATE_START);
-    private static final Vector STATE_START = Vector.of(5, 0);
-    private static final Vector STATE_FETCH = Vector.of(5, 1);
-    private static final Vector STATE_DECODE_AND_READ1 = Vector.of(5, 2);
-    private static final Vector STATE_DECODE_AND_READ2 = Vector.of(5, 3);
-    private static final Vector STATE_EXEC_OP_0 = Vector.of(5, 4);
-    private static final Vector STATE_EXEC_OP_1 = Vector.of(5, 5);
-    private static final Vector STATE_EXEC_OP_2 = Vector.of(5, 6);
-    private static final Vector STATE_EXEC_OP_3 = Vector.of(5, 7);
-    private static final Vector STATE_PREPARE_BRANCH = Vector.of(5, 8);
-    private static final Vector STATE_EXEC_BRANCH = Vector.of(5, 9);
-    private static final Vector STATE_EXEC_LUI = Vector.of(5, 10);
-    private static final Vector STATE_EXEC_AUIPC = Vector.of(5, 11);
-    private static final Vector STATE_EXEC_JAL = Vector.of(5, 12);
-    private static final Vector STATE_EXEC_JALR = Vector.of(5, 13);
-    private static final Vector STATE_MEM_COMPUTE_ADDRESS = Vector.of(5, 14);
-    private static final Vector STATE_MEM_ACCESS = Vector.of(5, 15);
-    private static final Vector STATE_MEM_EXTEND = Vector.of(5, 16);
-    private static final Vector STATE_EXCEPTION = Vector.of(5, 17);
-    private static final Vector STATE_SYSTEM_INSTRUCTION = Vector.of(5, 18);
-    private static final Vector STATE_CSR_INSTRUCTION = Vector.of(5, 19);
-    private static final Vector STATE_WRITE_MISC_VALUE_TO_REGISTER = Vector.of(5, 20);
-    private static final Vector STATE_CUSTOM_INSTRUCTION = Vector.of(5, 21);
-    private static final Vector STATE_FINISH_EARLY_FETCH = Vector.of(5, 22);
+    public final ProceduralVectorRegister state = vectorRegister(5, STATE_START);
+    public static final Vector STATE_START = Vector.of(5, 0);
+    public static final Vector STATE_FETCH = Vector.of(5, 1);
+    public static final Vector STATE_DECODE_AND_READ1 = Vector.of(5, 2);
+    public static final Vector STATE_DECODE_AND_READ2 = Vector.of(5, 3);
+    public static final Vector STATE_EXEC_OP_0 = Vector.of(5, 4);
+    public static final Vector STATE_EXEC_OP_1 = Vector.of(5, 5);
+    public static final Vector STATE_EXEC_OP_2 = Vector.of(5, 6);
+    public static final Vector STATE_EXEC_OP_3 = Vector.of(5, 7);
+    public static final Vector STATE_PREPARE_BRANCH = Vector.of(5, 8);
+    public static final Vector STATE_EXEC_BRANCH = Vector.of(5, 9);
+    public static final Vector STATE_EXEC_LUI = Vector.of(5, 10);
+    public static final Vector STATE_EXEC_AUIPC = Vector.of(5, 11);
+    public static final Vector STATE_EXEC_JAL = Vector.of(5, 12);
+    public static final Vector STATE_EXEC_JALR = Vector.of(5, 13);
+    public static final Vector STATE_MEM_COMPUTE_ADDRESS = Vector.of(5, 14);
+    public static final Vector STATE_MEM_ACCESS = Vector.of(5, 15);
+    public static final Vector STATE_MEM_EXTEND = Vector.of(5, 16);
+    public static final Vector STATE_EXCEPTION = Vector.of(5, 17);
+    public static final Vector STATE_SYSTEM_INSTRUCTION = Vector.of(5, 18);
+    public static final Vector STATE_CSR_INSTRUCTION = Vector.of(5, 19);
+    public static final Vector STATE_WRITE_MISC_VALUE_TO_REGISTER = Vector.of(5, 20);
+    public static final Vector STATE_CUSTOM_INSTRUCTION = Vector.of(5, 21);
+    public static final Vector STATE_FINISH_EARLY_FETCH = Vector.of(5, 22);
 
     // PC and old PC (current instruction location, even after the PC gets incremented)
-    private final ProceduralVectorRegister pc = vectorRegister(32, 0);
-    private final ProceduralVectorRegister oldPc = vectorRegister(32, 0);
+    public final ProceduralVectorRegister pc = vectorRegister(32, 0);
+    public final ProceduralVectorRegister oldPc = vectorRegister(32, 0);
 
     // instruction decoding
-    private final ProceduralVectorRegister instructionRegister = vectorRegister(32);
-    private final ProceduralVectorRegister immediateOperand = vectorRegister(32);
-    private final VectorSignal opcode = select(instructionRegister, 6, 2);
-    private final VectorSignal sourceRegisterIndex1 = select(instructionRegister, 19, 15);
-    private final VectorSignal sourceRegisterIndex2 = select(instructionRegister, 24, 20);
-    private final VectorSignal destinationRegisterIndex = select(instructionRegister, 11, 7);
-    private final BitSignal operationIsMulDev = and(select(opcode, 3), select(instructionRegister, 25));
+    public final ProceduralVectorRegister instructionRegister = vectorRegister(32);
+    public final ProceduralVectorRegister immediateOperand = vectorRegister(32);
+    public final VectorSignal opcode = select(instructionRegister, 6, 2);
+    public final VectorSignal sourceRegisterIndex1 = select(instructionRegister, 19, 15);
+    public final VectorSignal sourceRegisterIndex2 = select(instructionRegister, 24, 20);
+    public final VectorSignal destinationRegisterIndex = select(instructionRegister, 11, 7);
+    public final BitSignal operationIsMulDev = and(select(opcode, 3), select(instructionRegister, 25));
 
     // register file
-    private final ProceduralMemory registers = memory(32, 32);
-    private final ProceduralVectorRegister registerReadValue = vectorRegister(32); // register reads go here
-    private final ProceduralVectorRegister firstRegisterValue = vectorRegister(32); // first read value is stored here on second read
-    private final VectorSignal leftOperand = firstRegisterValue;
-    private final VectorSignal rightOperand = when(select(opcode, 3), registerReadValue, immediateOperand);
-    private final BitSignal leftOperandLessThanRightOperandSigned = lessThan(
+    public final ProceduralMemory registers = memory(32, 32);
+    public final ProceduralVectorRegister registerReadValue = vectorRegister(32); // register reads go here
+    public final ProceduralVectorRegister firstRegisterValue = vectorRegister(32); // first read value is stored here on second read
+    public final VectorSignal leftOperand = firstRegisterValue;
+    public final VectorSignal rightOperand = when(select(opcode, 3), registerReadValue, immediateOperand);
+    public final BitSignal leftOperandLessThanRightOperandSigned = lessThan(
         concat(not(select(leftOperand, 31)), select(leftOperand, 30, 0)),
         concat(not(select(rightOperand, 31)), select(rightOperand, 30, 0))
     ); // TODO move to unsigned operations helper class
-    private final BitSignal leftOperandLessThanRightOperandUnsigned = lessThan(leftOperand, rightOperand);
-    private final BitSignal rightShiftInBitRegister = bitRegister(); // this register is loaded even before the first execution state, so it is ready when computing temporary results
+    public final BitSignal leftOperandLessThanRightOperandUnsigned = lessThan(leftOperand, rightOperand);
+    public final BitSignal rightShiftInBitRegister = bitRegister(); // this register is loaded even before the first execution state, so it is ready when computing temporary results
 
     // bus access
-    private final ProceduralVectorRegister busAddressRegister = vectorRegister(32);
-    private final ProceduralVectorRegister busReadDataRegister = vectorRegister(32);
+    public final ProceduralVectorRegister busAddressRegister = vectorRegister(32);
+    public final ProceduralVectorRegister busReadDataRegister = vectorRegister(32);
 
     // early fetching
-    private final ProceduralBitRegister earlyFetchStarted = bitRegister();
-    private final ProceduralBitRegister earlyFetchFinished = bitRegister();
-    private final ProceduralVectorRegister earlyFetchResult = vectorRegister(32);
+    public final ProceduralBitRegister earlyFetchStarted = bitRegister();
+    public final ProceduralBitRegister earlyFetchFinished = bitRegister();
+    public final ProceduralVectorRegister earlyFetchResult = vectorRegister(32);
 
     // Values from various special locations that should go into a general-purpose register can be stored here first,
     // so the actual path to the register file is a fast one.
-    private final ProceduralVectorRegister miscRegisterWriteValue = vectorRegister(32);
+    public final ProceduralVectorRegister miscRegisterWriteValue = vectorRegister(32);
 
     // exception / interrupt handling
-    private final ProceduralVectorRegister exceptionHandlerReturnAddress = vectorRegister(32);
+    public final ProceduralVectorRegister exceptionHandlerReturnAddress = vectorRegister(32);
 
     // special registers including CSRs
-    private final ProceduralBitRegister enableInterrupts = bitRegister();
-    private final ProceduralVectorRegister exceptionCode = vectorRegister(5);
+    public final ProceduralBitRegister enableInterrupts = bitRegister();
+    public final ProceduralVectorRegister exceptionCode = vectorRegister(5, 0);
     public static final int EXCEPTION_NONE = 0;
     public static final int EXCEPTION_INTERRUPT = 1;
     public static final int EXCEPTION_INVALID_INSTRUCTION = 2;
@@ -113,7 +113,7 @@ public final class RiscvCpu extends Component {
                     set(earlyFetchFinished, true); // will be ignored for non-early-fetch ACKs
                     set(earlyFetchResult, bus.readData);
                 });
-                SwitchStatement stateSwitch = new SwitchStatement(state);
+                SwitchStatement stateSwitch = dslStatement(new SwitchStatement(state));
                 addCase(stateSwitch, STATE_START, () -> {
                     set(oldPc, pc);
                     set(busAddressRegister, pc);
@@ -158,7 +158,7 @@ public final class RiscvCpu extends Component {
                     set(busAddressRegister, pc); // for early fetching
                     set(earlyFetchFinished, false);
 
-                    SwitchStatement opcodeSwitch = new SwitchStatement(opcode);
+                    SwitchStatement opcodeSwitch = dslStatement(new SwitchStatement(opcode));
                     addCase(opcodeSwitch, Vector.of(5, 0), () -> { // LOAD
                         set(state, STATE_MEM_COMPUTE_ADDRESS);
                     });
@@ -320,7 +320,7 @@ public final class RiscvCpu extends Component {
                     set(state, STATE_START);
                 });
                 addCase(stateSwitch, STATE_SYSTEM_INSTRUCTION, () -> {
-                    SwitchStatement subSwitch = new SwitchStatement(select(instructionRegister, 14, 12));
+                    SwitchStatement subSwitch = dslStatement(new SwitchStatement(select(instructionRegister, 14, 12)));
                     addCase(subSwitch, new Vector[] {Vector.of(3, 0), Vector.of(3, 4)}, () -> {
                         set(state, STATE_EXCEPTION);
                         set(exceptionCode, EXCEPTION_INVALID_INSTRUCTION);
@@ -337,12 +337,12 @@ public final class RiscvCpu extends Component {
                     set(state, STATE_START);
                 });
                 addCase(stateSwitch, STATE_CUSTOM_INSTRUCTION, () -> {
-                    SwitchStatement subSwitch = new SwitchStatement(select(instructionRegister, 29, 26));
+                    SwitchStatement subSwitch = dslStatement(new SwitchStatement(select(instructionRegister, 29, 26)));
 
                     // read special register
                     addCase(subSwitch, Vector.of(4, 0), () -> {
                         set(state, STATE_WRITE_MISC_VALUE_TO_REGISTER);
-                        SwitchStatement specialRegisterSwitch = new SwitchStatement(select(instructionRegister, 24, 20));
+                        SwitchStatement specialRegisterSwitch = dslStatement(new SwitchStatement(select(instructionRegister, 24, 20)));
                         addCase(specialRegisterSwitch, Vector.of(5, 0), () -> {
                             set(miscRegisterWriteValue, exceptionHandlerReturnAddress);
                         });
@@ -361,7 +361,7 @@ public final class RiscvCpu extends Component {
                     // write special register
                     addCase(subSwitch, Vector.of(4, 1), () -> {
                         set(state, STATE_START);
-                        SwitchStatement specialRegisterSwitch = new SwitchStatement(select(instructionRegister, 24, 20));
+                        SwitchStatement specialRegisterSwitch = dslStatement(new SwitchStatement(select(instructionRegister, 24, 20)));
                         addCase(specialRegisterSwitch, Vector.of(5, 0), () -> {
                             set(exceptionHandlerReturnAddress, firstRegisterValue);
                         });

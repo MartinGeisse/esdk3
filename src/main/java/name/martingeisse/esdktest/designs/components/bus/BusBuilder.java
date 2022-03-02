@@ -48,7 +48,7 @@ public class BusBuilder {
         }
         if (decodedAddressBits + slave.wordAddress.getWidth() > 30) {
             throw new IllegalArgumentException("decoded address bits (" + decodedAddressBits +
-                    " do not leave enough address bits for slave-local word address (" +
+                    ") do not leave enough address bits for slave-local word address (" +
                     slave.wordAddress.getWidth() + " needed)");
         }
         for (SlaveAttachment otherAttachment : slaveAttachments) {

@@ -556,15 +556,12 @@ public abstract class Component extends DesignItem {
      * nested blocks.
      */
     public final ClockedBlock on(ClockSignal clockSignal, Runnable body) {
-        if (statementSequenceBeingBuilt != null) {
-            throw new IllegalStateException("nested on() call detected");
-        }
         ClockedBlock clockedBlock = new ClockedBlock(clockSignal);
         nestedStatements(clockedBlock.getStatements(), body);
         return clockedBlock;
     }
 
-    private <T extends Statement> T dslStatement(T statement) {
+    public final <T extends Statement> T dslStatement(T statement) {
         if (statementSequenceBeingBuilt == null) {
             throw new IllegalStateException("cannot build statements outside a statement-building body");
         }

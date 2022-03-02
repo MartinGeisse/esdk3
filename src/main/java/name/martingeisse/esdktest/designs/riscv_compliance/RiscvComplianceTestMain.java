@@ -2,16 +2,21 @@ package name.martingeisse.esdktest.designs.riscv_compliance;
 
 import name.martingeisse.esdktest.designs.ExternalToolInvocation;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.LineIterator;
 
 import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * TODO also run the tests from https://github.com/riscv-software-src/riscv-tests
+ */
 public class RiscvComplianceTestMain {
 
-    public static final File COMPLIANCE_TEST_REPO = new File("/home/martin.geisse/git-repos/riscv-compliance");
+    public static final File COMPLIANCE_TEST_REPO = new File("/home/martin.geisse/git-repos/riscv-arch-test");
     public static final String TOOLCHAIN_PREFIX = "/home/martin.geisse/git-repos/riscv32-toolchain-build/bin/riscv32-unknown-elf-";
-    public static final String[] ISAS_TO_TEST = new String[]{"rv32i", "rv32im"};
+    public static final String[] ISAS_TO_TEST = {"I", "M"};
+    public static final String[] EXCLUDED_BASE_NAMES = {"I-ECALL-01", "I-MISALIGN_JMP-01"};
 
     private static void mkdir(File directory) {
         if (!directory.mkdir()) {
@@ -29,7 +34,7 @@ public class RiscvComplianceTestMain {
 
     public static void main(String[] args) throws Exception {
         for (String isa : ISAS_TO_TEST) {
-            File testSuiteSourceFolder = new File(COMPLIANCE_TEST_REPO, "riscv-test-suite/" + isa);
+            File testSuiteSourceFolder = new File(COMPLIANCE_TEST_REPO, "riscv-test-suite/rv32i_m/" + isa);
             File testSuiteBuildFolder = new File(buildRootFolder, isa);
             mkdir(testSuiteBuildFolder);
             runSuite(testSuiteSourceFolder, testSuiteBuildFolder);
@@ -46,12 +51,27 @@ public class RiscvComplianceTestMain {
                 baseFileNames + ", " + getBaseFileNames(referenceFileFolder, ".reference_output"));
         }
 
-        for (String baseFileName : baseFileNames) {
-            File sourceFile = new File(sourceFileFolder, baseFileName + ".S");
-            File referenceFile = new File(referenceFileFolder, baseFileName + ".reference_output");
-            File testBuildFolder = new File(testSuiteBuildFolder, baseFileName);
-            performTest(sourceFile, referenceFile, testBuildFolder);
+        Set<String> excludedBaseNames = new HashSet<>();
+        for (String name : EXCLUDED_BASE_NAMES) {
+            excludedBaseNames.add(name);
         }
+
+//        for (String baseFileName : baseFileNames) {
+//            if (excludedBaseNames.contains(baseFileName)) {
+//                continue;
+//            }
+//            File sourceFile = new File(sourceFileFolder, baseFileName + ".S");
+//            File referenceFile = new File(referenceFileFolder, baseFileName + ".reference_output");
+//            File testBuildFolder = new File(testSuiteBuildFolder, baseFileName);
+//            performTest(sourceFile, referenceFile, testBuildFolder);
+//        }
+
+        String baseFileName = "sh-align-01";
+        File sourceFile = new File(sourceFileFolder, baseFileName + ".S");
+        File referenceFile = new File(referenceFileFolder, baseFileName + ".reference_output");
+        File testBuildFolder = new File(testSuiteBuildFolder, baseFileName);
+        performTest(sourceFile, referenceFile, testBuildFolder);
+
     }
 
     private static Set<String> getBaseFileNames(File folder, String dotExtension) {
@@ -68,8 +88,7 @@ public class RiscvComplianceTestMain {
     private static void performTest(File sourceFileAtOriginalLocation, File referenceFile, File testBuildFolder) throws Exception {
         File sourceFile = new File(testBuildFolder, sourceFileAtOriginalLocation.getName());
         FileUtils.copyFile(sourceFileAtOriginalLocation, sourceFile);
-        FileUtils.copyURLToFile(RiscvComplianceTestMain.class.getResource("compliance_io.h"), new File(testBuildFolder, "compliance_io.h"));
-        FileUtils.copyURLToFile(RiscvComplianceTestMain.class.getResource("compliance_test.h"), new File(testBuildFolder, "compliance_test.h"));
+        FileUtils.copyURLToFile(RiscvComplianceTestMain.class.getResource("model_test.h"), new File(testBuildFolder, "model_test.h"));
         FileUtils.copyURLToFile(RiscvComplianceTestMain.class.getResource("linkerscript"), new File(testBuildFolder, "linkerscript"));
 
         System.out.println("*** performTest");
@@ -108,20 +127,28 @@ public class RiscvComplianceTestMain {
         }
 
         // run the test
-
-        TODO how to stop the simulation?
+        ComplianceTestingDesign design = new ComplianceTestingDesign();
+        design.loadMemoryContents(new File(testBuildFolder, "program.bin"));
         design.simulate();
+
+        // verify the outputs
+        int[] output = design.getOutput();
+        LineIterator lineIterator = FileUtils.lineIterator(referenceFile);
+        for (int actualValue : output) {
+            if (!lineIterator.hasNext()) {
+                throw new RuntimeException("too many actual output values");
+            }
+            long expectedValueLong = Long.parseLong(lineIterator.next(), 16);
+            if ((expectedValueLong & 0xffffffffL) != expectedValueLong) {
+                throw new RuntimeException("expected value has more than 32 bits");
+            }
+            int expectedValue = (int)expectedValueLong;
+            if (actualValue != expectedValue) {
+                throw new RuntimeException("expected value " + Long.toHexString(expectedValue & 0xffffffffL) +
+                    ", actual value " + Long.toHexString(actualValue & 0xffffffffL));
+            }
+        }
 
     }
 
 }
-
-/*
-
-RUN_TARGET=\
-    grift-sim $(RISCV_TARGET_FLAGS) --arch=RV32I \
-        --mem-dump-begin=begin_signature --mem-dump-end=end_signature \
-	--halt-pc=grift_stop_addr \
-        $(work_dir_isa)/$< > $(work_dir_isa)/$(*).signature.output 2> $(work_dir_isa)/$@;
-
- */
