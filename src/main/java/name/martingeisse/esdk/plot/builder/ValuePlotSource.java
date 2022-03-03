@@ -1,8 +1,8 @@
-package name.martingeisse.esdk.plot.plotter;
+package name.martingeisse.esdk.plot.builder;
 
 import name.martingeisse.esdk.plot.ValuePlotDescriptor;
 
-public interface ValuePlotter {
+public interface ValuePlotSource {
     ValuePlotDescriptor buildDescriptor();
     Object buildUpdate();
 }

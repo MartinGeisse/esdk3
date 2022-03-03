@@ -1,4 +1,4 @@
-package name.martingeisse.esdk.plot.plotter;
+package name.martingeisse.esdk.plot.builder;
 
 import com.google.common.collect.ImmutableList;
 import name.martingeisse.esdk.plot.Event;
@@ -7,28 +7,33 @@ import name.martingeisse.esdk.plot.ValuePlotDescriptor;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class DesignPlotter {
+/**
+ TODO should make it clear that this is not by itself part of a design!
+ TODO should make it clear that this does not by itself render the plot!
+ *
+ */
+public final class DesignPlotBuilder {
 
-    private final ImmutableList<ValuePlotter> valuePlotters;
+    private final ImmutableList<ValuePlotSource> valuePlotSources;
     private final List<Event> events;
 
-    public DesignPlotter(ImmutableList<ValuePlotter> valuePlotters) {
-        this.valuePlotters = valuePlotters;
+    public DesignPlotBuilder(ImmutableList<ValuePlotSource> valuePlotSources) {
+        this.valuePlotSources = valuePlotSources;
         this.events = new ArrayList<>();
     }
 
     public ImmutableList<ValuePlotDescriptor> buildValuePlotDescriptors() {
         List<ValuePlotDescriptor> valuePlotDescriptors = new ArrayList<>();
-        for (ValuePlotter valuePlotter : valuePlotters) {
-            valuePlotDescriptors.add(valuePlotter.buildDescriptor());
+        for (ValuePlotSource valuePlotSource : valuePlotSources) {
+            valuePlotDescriptors.add(valuePlotSource.buildDescriptor());
         }
         return ImmutableList.copyOf(valuePlotDescriptors);
     }
 
     public void buildEvent() {
         List<Object> updates = new ArrayList<>();
-        for (ValuePlotter valuePlotter : valuePlotters) {
-            updates.add(valuePlotter.buildUpdate());
+        for (ValuePlotSource valuePlotSource : valuePlotSources) {
+            updates.add(valuePlotSource.buildUpdate());
         }
         events.add(new Event(ImmutableList.copyOf(updates)));
     }

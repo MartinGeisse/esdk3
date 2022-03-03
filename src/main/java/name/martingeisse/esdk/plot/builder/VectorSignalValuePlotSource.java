@@ -1,20 +1,20 @@
-package name.martingeisse.esdk.plot.plotter;
+package name.martingeisse.esdk.plot.builder;
 
 import name.martingeisse.esdk.core.library.signal.VectorSignal;
 import name.martingeisse.esdk.plot.ValuePlotDescriptor;
 import name.martingeisse.esdk.plot.VectorFormat;
 
-public final class VectorSignalValuePlotter implements ValuePlotter {
+public final class VectorSignalValuePlotSource implements ValuePlotSource {
 
     private final String name;
     private final VectorSignal signal;
     private final VectorFormat format;
 
-    public VectorSignalValuePlotter(String name, VectorSignal signal) {
+    public VectorSignalValuePlotSource(String name, VectorSignal signal) {
         this(name, signal, null);
     }
 
-    public VectorSignalValuePlotter(String name, VectorSignal signal, VectorFormat format) {
+    public VectorSignalValuePlotSource(String name, VectorSignal signal, VectorFormat format) {
         this.name = name;
         this.signal = signal;
         this.format = format;

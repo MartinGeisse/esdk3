@@ -1,14 +1,14 @@
-package name.martingeisse.esdk.plot.plotter;
+package name.martingeisse.esdk.plot.builder;
 
 import name.martingeisse.esdk.core.library.signal.BitSignal;
 import name.martingeisse.esdk.plot.ValuePlotDescriptor;
 
-public final class BitSignalValuePlotter implements ValuePlotter {
+public final class BitSignalValuePlotSource implements ValuePlotSource {
 
     private final String name;
     private final BitSignal signal;
 
-    public BitSignalValuePlotter(String name, BitSignal signal) {
+    public BitSignalValuePlotSource(String name, BitSignal signal) {
         this.name = name;
         this.signal = signal;
     }
