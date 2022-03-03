@@ -29,7 +29,7 @@ public class InstructionToTextDisassembler {
     }
 
     public void disassemble(int instruction) {
-        int opcode = getOpcode(instruction);
+        int opcode = getOpcodeField(instruction);
         switch (opcode) {
 
             case 0b0000011:
@@ -49,7 +49,7 @@ public class InstructionToTextDisassembler {
                 break;
 
             case 0b0010011:
-                out.print("TODO OP-IMM");
+                disassembleOp(instruction, true);
                 break;
 
             case 0b0010111:
@@ -79,7 +79,7 @@ public class InstructionToTextDisassembler {
                 break;
 
             case 0b0110011:
-                out.print("TODO OP");
+                disassembleOp(instruction, false);
                 break;
 
             case 0b0110111:
@@ -156,58 +156,83 @@ public class InstructionToTextDisassembler {
         out.print(opcodeText + " (not implemented in disassembler)");
     }
 
-    private static String[] baseOpNamesFunct3 = {
-            "ADD?",
-            "SLL?",
-            "SLT?",
-            "SLT?U",
-            "XOR?",
-            "SRL?",
-            "OR?",
-            "AND?",
-    };
-
-    private static String[] modifier30OpNamesFunct3 = {
-            "SUB",
-            null,
-            null,
-            null,
-            null,
-            "SRA?",
-            null,
-            null,
-    };
-
-    protected void handleOp(int instruction, boolean immediate) {
-        int funct3 = (instruction >> 12) & 7;
-        boolean bit30 = ((instruction >> 30) & 1) != 0;
-        int immediateValue = (instruction >>> 20);
-        int shiftAmount = (instruction)
+    protected void disassembleOp(int instruction, boolean isOpImm) {
+        int funct3 = getFunct3Field(instruction);
+        boolean bit30 = getBit(instruction, 30);
         switch (funct3) {
 
             case 0:
-
+                if (isOpImm) {
+                    printOp("addi", instruction);
+                } else if (bit30) {
+                    printOp("sub", instruction);
+                } else {
+                    printOp("add", instruction);
+                }
                 break;
 
             case 1:
+                if (isOpImm) {
+                    printShiftOpImm("slli", instruction);
+                } else {
+                    printOp("sll", instruction);
+                }
                 break;
 
             case 2:
+                if (isOpImm) {
+                    printShiftOpImm("slti", instruction);
+                } else {
+                    printOp("slt", instruction);
+                }
                 break;
 
             case 3:
+                if (isOpImm) {
+                    printShiftOpImm("sltiu", instruction);
+                } else {
+                    printOp("sltu", instruction);
+                }
                 break;
 
             case 4:
+                if (isOpImm) {
+                    printShiftOpImm("xori", instruction);
+                } else {
+                    printOp("xor", instruction);
+                }
                 break;
 
             case 5:
+                if (isOpImm) {
+                    if (bit30) {
+                        printOp("srai", instruction);
+                    } else {
+                        printOp("srli", instruction);
+                    }
+                } else {
+                    if (bit30) {
+                        printOp("sra", instruction);
+                    } else {
+                        printOp("srl", instruction);
+                    }
+                }
                 break;
 
             case 6:
+                if (isOpImm) {
+                    printShiftOpImm("ori", instruction);
+                } else {
+                    printOp("or", instruction);
+                }
                 break;
 
             case 7:
+                if (isOpImm) {
+                    printShiftOpImm("andi", instruction);
+                } else {
+                    printOp("and", instruction);
+                }
                 break;
 
             default:
@@ -216,14 +241,52 @@ public class InstructionToTextDisassembler {
         }
     }
 
-    private void handleOpInternal(int instruction, boolean immediate) {
+    protected void printOp(String mnemonic, int instruction) {
+        out.print(mnemonic + " x" + getRdField(instruction) + ", x" + getRs1Field(instruction) + ", x" + getRs2Field(instruction));
+    }
+
+    protected void printOpImm(String mnemonic, int instruction) {
+        out.print(mnemonic + " x" + getRdField(instruction) + ", x" + getRs1Field(instruction) + ", " + getOpImmediateField(instruction));
+    }
+
+    protected void printShiftOpImm(String mnemonic, int instruction) {
+        out.print(mnemonic + " x" + getRdField(instruction) + ", x" + getRs1Field(instruction) + ", " + getShiftAmountField(instruction));
+    }
 
     // ----------------------------------------------------------------------------------------------------------------
     // helpers
     // ----------------------------------------------------------------------------------------------------------------
 
-    protected final int getOpcode(int instruction) {
+    protected final int getOpcodeField(int instruction) {
         return instruction & 127;
+    }
+
+    protected final int getFunct3Field(int instruction) {
+        return (instruction >> 12) & 7;
+    }
+
+    protected final int getOpImmediateField(int instruction) {
+        return instruction >> 20; // sign-extended
+    }
+
+    protected final int getShiftAmountField(int instruction) {
+        return getOpImmediateField(instruction) & 31;
+    }
+
+    protected final int getRdField(int instruction) {
+        return (instruction >> 7) & 31;
+    }
+
+    protected final int getRs1Field(int instruction) {
+        return (instruction >> 15) & 31;
+    }
+
+    protected final int getRs2Field(int instruction) {
+        return (instruction >> 20) & 31;
+    }
+
+    protected final boolean getBit(int instruction, int index) {
+        return ((instruction >> index) & 1) != 0;
     }
 
     /**
