@@ -6,6 +6,9 @@ import com.google.common.collect.ImmutableList;
  * Plot objects are immutable, but not value objects in general. That is, their identity does matter, and is
  * usually used for referencing.
  *
+ * A plot is defined as a sequence of events, each of which carries a set of updates -- one update per value plot.
+ * TODO rename updates to samples? more appropriate for signals, which is the main usage!
+ * ...
  * The initial values are defined through an initializer event that is treated the same way as other events with
  * respect to the updated values, but with special treatment in terms of timing. It is defined to happen before all
  * events, with no reference to a specific point in time, and does not take part in event numbering -- the first

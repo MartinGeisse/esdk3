@@ -36,6 +36,7 @@ public final class ClockedPlotter extends ClockedSimulationDesignItem {
 
     @Override
     public void computeNextState() {
+        plotBuilder.buildEvent();
     }
 
     @Override
