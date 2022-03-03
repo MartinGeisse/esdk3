@@ -11,25 +11,14 @@ import com.google.common.collect.ImmutableList;
  * values apply.
  *
  * The trigger that causes events and their values to be plotted defines how the timing of these events must be
- * interpreted. The common case is clock-triggered, which means that each each event contains the values that are
- * asserted at a specific clock edge TODO not correct either. The confusion comes from register values vs. signal
- * values -- register values change at edges and are stable during cycles, while signal values change during cycles
- * and are stable at edges!
- *      - treating a register as a signal returns its current value
- *      - the only difference is when the values change
- *      - registers change precisely at clock edges. Signals change at an undefined point somewhere during a cycle
- *          (the exact point is not modeled in RTL!)
- *      - the signal associated with a register changes directly after an edge
- *      - directly before an edge, each register signal is equal to the stored value, and derived signals have
- *          values that are consistent with the register values and the operators that define the derived signals
- *      - solution: define the sampling point for the plot either directly before or after a clock edge (which?)
- *          -> before the edge!
- *      - "directly before the edge" is precise but confusing, because it refers to an edge when the values get
- *          destroyed.
- *      - better: "at the end of a clock cycle" -- refers to the cycle, not the edge.
+ * interpreted. The common case is clock-triggered, which means that each event contains the values that are stable
+ * at the end of a specific clock cycle, immediately before the next clock edge. This ensures that values stored in
+ * registers correspond to the values when treating a register as a signal, and the values of derived signals are
+ * consistent with register values, in the sense of the operators that define the derived signals. Value plots
+ * that describe changes to the current state, as opposed to the current state itself, should be defined in a way
+ * that is consistent with this definition.
  *
- * during a specific clock cycle. TODO correct? values are definitely asserted at a clock *edge* and may
- * change during a cycle, so that's exactly wrong!
+ * TODO define the timing of the initialization events / values
  */
 public final class DesignPlot {
 
