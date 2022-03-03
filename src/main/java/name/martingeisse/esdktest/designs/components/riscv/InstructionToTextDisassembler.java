@@ -156,6 +156,68 @@ public class InstructionToTextDisassembler {
         out.print(opcodeText + " (not implemented in disassembler)");
     }
 
+    private static String[] baseOpNamesFunct3 = {
+            "ADD?",
+            "SLL?",
+            "SLT?",
+            "SLT?U",
+            "XOR?",
+            "SRL?",
+            "OR?",
+            "AND?",
+    };
+
+    private static String[] modifier30OpNamesFunct3 = {
+            "SUB",
+            null,
+            null,
+            null,
+            null,
+            "SRA?",
+            null,
+            null,
+    };
+
+    protected void handleOp(int instruction, boolean immediate) {
+        int funct3 = (instruction >> 12) & 7;
+        boolean bit30 = ((instruction >> 30) & 1) != 0;
+        int immediateValue = (instruction >>> 20);
+        int shiftAmount = (instruction)
+        switch (funct3) {
+
+            case 0:
+
+                break;
+
+            case 1:
+                break;
+
+            case 2:
+                break;
+
+            case 3:
+                break;
+
+            case 4:
+                break;
+
+            case 5:
+                break;
+
+            case 6:
+                break;
+
+            case 7:
+                break;
+
+            default:
+                throw new RuntimeException();
+
+        }
+    }
+
+    private void handleOpInternal(int instruction, boolean immediate) {
+
     // ----------------------------------------------------------------------------------------------------------------
     // helpers
     // ----------------------------------------------------------------------------------------------------------------
@@ -171,6 +233,5 @@ public class InstructionToTextDisassembler {
         String s = "00000000000000000000000000000000" + Integer.toBinaryString(value);
         return s.substring(s.length() - bits);
     }
-
 
 }

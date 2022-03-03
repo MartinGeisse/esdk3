@@ -4,6 +4,7 @@ import name.martingeisse.esdk.core.library.signal.VectorSignal;
 import name.martingeisse.esdk.core.library.simulation.ClockedSimulationDesignItem;
 import name.martingeisse.esdk.core.util.vector.Vector;
 
+import java.io.PrintWriter;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
@@ -28,10 +29,12 @@ public class TraceLogger extends ClockedSimulationDesignItem {
     }
 
     private final RiscvCpu cpu;
+    private final InstructionToTextDisassembler disassembler;
 
     public TraceLogger(RiscvCpu cpu) {
         super(cpu.clock);
         this.cpu = cpu;
+        this.disassembler = new InstructionToTextDisassembler(new PrintWriter(System.out));
     }
 
     @Override
@@ -59,12 +62,14 @@ public class TraceLogger extends ClockedSimulationDesignItem {
             }
         }
         if (state.equals(RiscvCpu.STATE_DECODE_AND_READ1)) {
-            System.out.print(", instruction = (" + instructionToFields() + ")");
+            // System.out.print(", instruction = (" + instructionToFields() + ")");
+            System.out.print(", instruction = ");
+            disassembler.disassemble(cpu.instructionRegister.getValue().getAsSignedInt());
             System.out.println();
             int instruction = cpu.instructionRegister.getValue().getAsSignedInt();
             System.out.print("\t[rd] = " + cpu.registers.getMatrix().getRow((instruction >> 7) & 31));
-            System.out.print("\t[rs1] = " + cpu.registers.getMatrix().getRow((instruction >> 15) & 31));
-            System.out.print("\t[rs2] = " + cpu.registers.getMatrix().getRow((instruction >> 20) & 31));
+            System.out.print(", [rs1] = " + cpu.registers.getMatrix().getRow((instruction >> 15) & 31));
+            System.out.print(", [rs2] = " + cpu.registers.getMatrix().getRow((instruction >> 20) & 31));
         }
 
         System.out.println();

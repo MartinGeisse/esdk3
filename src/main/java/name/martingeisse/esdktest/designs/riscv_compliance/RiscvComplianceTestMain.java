@@ -5,6 +5,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.LineIterator;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -43,7 +44,13 @@ public class RiscvComplianceTestMain {
 
     private static void runSuite(File testSuiteSourceFolder, File testSuiteBuildFolder) throws Exception {
         File sourceFileFolder = new File(testSuiteSourceFolder, "src");
+        if (!sourceFileFolder.exists()) {
+            throw new IOException("folder does not exist: " + sourceFileFolder);
+        }
         File referenceFileFolder = new File(testSuiteSourceFolder, "references");
+        if (!referenceFileFolder.exists()) {
+            throw new IOException("folder does not exist: " + referenceFileFolder);
+        }
 
         Set<String> baseFileNames = getBaseFileNames(sourceFileFolder, ".S");
         if (!baseFileNames.equals(getBaseFileNames(referenceFileFolder, ".reference_output"))) {
