@@ -64,7 +64,7 @@ public class TraceLogger extends ClockedSimulationDesignItem {
         if (state.equals(RiscvCpu.STATE_DECODE_AND_READ1)) {
             // System.out.print(", instruction = (" + instructionToFields() + ")");
             System.out.print(", instruction = ");
-            disassembler.disassemble(cpu.instructionRegister.getValue().getAsSignedInt());
+            disassembler.disassemble(cpu.instructionRegister);
             System.out.println();
             int instruction = cpu.instructionRegister.getValue().getAsSignedInt();
             System.out.print("\t[rd] = " + cpu.registers.getMatrix().getRow((instruction >> 7) & 31));

@@ -1,33 +1,33 @@
-//package name.martingeisse.esdktest.designs.components.riscv;
-//
-//import name.martingeisse.esdk.core.library.signal.VectorSignal;
-//import name.martingeisse.esdk.core.util.vector.Vector;
-//
-//import java.io.PrintWriter;
-//
-//public class InstructionToTextDisassembler {
-//
-//    protected final PrintWriter out;
-//
-//    public InstructionToTextDisassembler(PrintWriter out) {
-//        this.out = out;
-//    }
-//
-//    // ----------------------------------------------------------------------------------------------------------------
-//    // entry points
-//    // ----------------------------------------------------------------------------------------------------------------
-//
-//    public void disassemble(VectorSignal signal) {
-//        disassemble(signal.getValue());
-//    }
-//
-//    public void disassemble(Vector instruction) {
-//        if (instruction.getWidth() != 32) {
-//            throw new IllegalArgumentException("argument has wrong width: " + instruction.getWidth() + " (expected 32)");
-//        }
+package name.martingeisse.esdktest.designs.components.riscv;
+
+import name.martingeisse.esdk.core.library.signal.VectorSignal;
+import name.martingeisse.esdk.core.util.vector.Vector;
+
+import java.io.PrintWriter;
+
+public class InstructionToTextDisassembler {
+
+    protected final PrintWriter out;
+
+    public InstructionToTextDisassembler(PrintWriter out) {
+        this.out = out;
+    }
+
+    // ----------------------------------------------------------------------------------------------------------------
+    // entry points
+    // ----------------------------------------------------------------------------------------------------------------
+
+    public void disassemble(VectorSignal signal) {
+        disassemble(signal.getValue());
+    }
+
+    public void disassemble(Vector instruction) {
+        if (instruction.getWidth() != 32) {
+            throw new IllegalArgumentException("argument has wrong width: " + instruction.getWidth() + " (expected 32)");
+        }
 //        disassemble(instruction.getAsSignedInt());
-//    }
-//
+    }
+
 //    public void disassemble(int instruction) {
 //        int opcode = getOpcode(instruction);
 //        switch (opcode) {
@@ -233,5 +233,5 @@
 //        String s = "00000000000000000000000000000000" + Integer.toBinaryString(value);
 //        return s.substring(s.length() - bits);
 //    }
-//
-//}
+
+}
