@@ -1,10 +1,7 @@
 package name.martingeisse.esdk.plot.render;
 
 import name.martingeisse.esdk.core.util.vector.Vector;
-import name.martingeisse.esdk.plot.DesignPlot;
-import name.martingeisse.esdk.plot.Event;
-import name.martingeisse.esdk.plot.VariablePlotDescriptor;
-import name.martingeisse.esdk.plot.VectorFormat;
+import name.martingeisse.esdk.plot.*;
 
 import java.io.PrintWriter;
 
@@ -23,7 +20,11 @@ public class HtmlRenderer {
     }
 
     public void beginDocument() {
-        out.println("<html><body>");
+        out.println("<html><head><style type=\"text/css\">");
+        out.println("table {border-collapse: collapse}");
+        out.println("th {padding: 5px 10px; text-align: center;}");
+        out.println("td {border: 1px solid #444; padding: 5px 10px; text-align: center;}");
+        out.println("</style></head><body>");
     }
 
     public void endDocument() {
@@ -52,6 +53,9 @@ public class HtmlRenderer {
             out.print((Boolean) sample ? "1" : "0");
         } else if (descriptor instanceof VariablePlotDescriptor.Vector) {
             VectorFormat format = ((VariablePlotDescriptor.Vector) descriptor).format;
+            if (format == null) {
+                format = NumberFormat.DECIMAL;
+            }
             out.print(format.render(descriptor, (Vector) sample));
         } else {
             out.print("???");

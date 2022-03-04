@@ -36,8 +36,8 @@ public class BlinkPlotterTestMain extends Component {
         design.simulate();
 
         File outputFolder = new File("output");
-        if (!outputFolder.mkdir()) {
-            throw new IOException();
+        if (!outputFolder.exists() && !outputFolder.mkdir()) {
+            throw new IOException("could not create output folder");
         }
         File outputFile = new File(outputFolder, "blink.html");
         try (FileOutputStream outStream = new FileOutputStream(outputFile)) {
