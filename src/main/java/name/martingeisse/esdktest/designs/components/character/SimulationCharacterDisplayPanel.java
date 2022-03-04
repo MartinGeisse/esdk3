@@ -76,7 +76,7 @@ public class SimulationCharacterDisplayPanel extends JPanel {
 	}
 
 	// TODO refactor with MonitorPanel
-	public static void openWindow(SimulationCharacterDisplayPanel displayPanel, String title) {
+	public static JFrame openWindow(SimulationCharacterDisplayPanel displayPanel, String title) {
 		JFrame frame = new JFrame(title);
 		frame.add(displayPanel);
 		frame.pack();
@@ -84,6 +84,7 @@ public class SimulationCharacterDisplayPanel extends JPanel {
 		frame.setResizable(false);
 		frame.setVisible(true);
 		new Timer(500, event -> displayPanel.repaint()).start();
+		return frame;
 	}
 
 }
