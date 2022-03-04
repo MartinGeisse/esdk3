@@ -4,22 +4,22 @@ import com.google.common.collect.ImmutableList;
 
 public final class Event {
 
-    public final ImmutableList<Object> updates;
+    public final ImmutableList<Object> samples;
 
-    public Event(ImmutableList<Object> updates) {
-        if (updates == null) {
-            throw new IllegalArgumentException("updates is null");
+    public Event(ImmutableList<Object> samples) {
+        if (samples == null) {
+            throw new IllegalArgumentException("samples is null");
         }
-        this.updates = updates;
+        this.samples = samples;
     }
 
     public void validate(ImmutableList<ValuePlotDescriptor> valuePlotDescriptors) {
-        if (updates.size() != valuePlotDescriptors.size()) {
-            throw new IllegalArgumentException("invalid number of updates: " + updates.size() + " (expected " + valuePlotDescriptors.size() + ")");
+        if (samples.size() != valuePlotDescriptors.size()) {
+            throw new IllegalArgumentException("invalid number of samples: " + samples.size() + " (expected " + valuePlotDescriptors.size() + ")");
         }
-        int numberOfUpdates = updates.size();
-        for (int i = 0; i < numberOfUpdates; i++) {
-            valuePlotDescriptors.get(i).validateUpdate(updates.get(i));
+        int numberOfSamples = samples.size();
+        for (int i = 0; i < numberOfSamples; i++) {
+            valuePlotDescriptors.get(i).validateSample(samples.get(i));
         }
     }
 

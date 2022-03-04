@@ -38,21 +38,21 @@ public class HtmlRenderer {
         out.println("</tr>");
         for (Event event : designPlot.events) {
             out.println("<tr>");
-            for (int i = 0; i < event.updates.size(); i++) {
+            for (int i = 0; i < event.samples.size(); i++) {
                 out.println("<td>");
-                renderUpdate(designPlot.valuePlotDescriptors.get(i), event.updates.get(i));
+                renderSample(designPlot.valuePlotDescriptors.get(i), event.samples.get(i));
                 out.println("</td>");
             }
             out.println("</tr>");
         }
     }
 
-    public void renderUpdate(ValuePlotDescriptor descriptor, Object update) {
+    public void renderSample(ValuePlotDescriptor descriptor, Object sample) {
         if (descriptor instanceof ValuePlotDescriptor.Bit) {
-            out.print((Boolean) update ? "1" : "0");
+            out.print((Boolean) sample ? "1" : "0");
         } else if (descriptor instanceof ValuePlotDescriptor.Vector) {
             VectorFormat format = ((ValuePlotDescriptor.Vector) descriptor).format;
-            out.print(format.render(descriptor, (Vector)update));
+            out.print(format.render(descriptor, (Vector) sample));
         } else {
             out.print("???");
         }

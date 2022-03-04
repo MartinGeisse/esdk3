@@ -8,16 +8,16 @@ public abstract class ValuePlotDescriptor {
         this.name = name;
     }
 
-    public abstract void validateUpdate(Object update);
+    public abstract void validateSample(Object sample);
 
-    protected final void checkValid(Object update, boolean valid) {
+    protected final void checkValid(Object sample, boolean valid) {
         if (!valid) {
-            invalidUpdate(update);
+            invalidSample(sample);
         }
     }
 
-    protected final void invalidUpdate(Object o) {
-        throw new IllegalArgumentException("invalid update for " + this + ": " + o);
+    protected final void invalidSample(Object o) {
+        throw new IllegalArgumentException("invalid sample for " + this + ": " + o);
     }
 
     public static class Bit extends ValuePlotDescriptor {
@@ -27,8 +27,8 @@ public abstract class ValuePlotDescriptor {
         }
 
         @Override
-        public void validateUpdate(Object update) {
-            checkValid(update, update instanceof Boolean);
+        public void validateSample(Object sample) {
+            checkValid(sample, sample instanceof Boolean);
         }
     }
 
@@ -49,10 +49,10 @@ public abstract class ValuePlotDescriptor {
 
         @Override
         @SuppressWarnings("ConstantConditions")
-        public void validateUpdate(Object update) {
-            checkValid(update, update instanceof name.martingeisse.esdk.core.util.vector.Vector);
-            name.martingeisse.esdk.core.util.vector.Vector vectorUpdate = (name.martingeisse.esdk.core.util.vector.Vector)update;
-            checkValid(update, vectorUpdate.getWidth() == this.width);
+        public void validateSample(Object sample) {
+            checkValid(sample, sample instanceof name.martingeisse.esdk.core.util.vector.Vector);
+            name.martingeisse.esdk.core.util.vector.Vector vectorSample = (name.martingeisse.esdk.core.util.vector.Vector)sample;
+            checkValid(sample, vectorSample.getWidth() == this.width);
         }
 
     }

@@ -6,39 +6,39 @@ public enum NumberFormat implements VectorFormat {
 
     DECIMAL {
         @Override
-        public String render(ValuePlotDescriptor descriptor, Vector value) {
-            return Long.toString(value.getAsUnsignedLong());
+        public String render(ValuePlotDescriptor descriptor, Vector sample) {
+            return Long.toString(sample.getAsUnsignedLong());
         }
     },
 
     HEXADECIMAL {
         @Override
-        public String render(ValuePlotDescriptor descriptor, Vector value) {
-            return "0x" + Long.toHexString(value.getAsUnsignedLong());
+        public String render(ValuePlotDescriptor descriptor, Vector sample) {
+            return "0x" + Long.toHexString(sample.getAsUnsignedLong());
         }
     },
 
     HEXADECIMAL_PADDED {
         @Override
-        public String render(ValuePlotDescriptor descriptor, Vector value) {
-            int digits = (value.getWidth() + 3) / 4;
-            String s = "0000000000000000" + Long.toHexString(value.getAsUnsignedLong());
+        public String render(ValuePlotDescriptor descriptor, Vector sample) {
+            int digits = (sample.getWidth() + 3) / 4;
+            String s = "0000000000000000" + Long.toHexString(sample.getAsUnsignedLong());
             return "0x" + s.substring(s.length() - digits);
         }
     },
 
     BINARY {
         @Override
-        public String render(ValuePlotDescriptor descriptor, Vector value) {
-            return "0b" + Long.toBinaryString(value.getAsUnsignedLong());
+        public String render(ValuePlotDescriptor descriptor, Vector sample) {
+            return "0b" + Long.toBinaryString(sample.getAsUnsignedLong());
         }
     },
 
     BINARY_PADDED {
         @Override
-        public String render(ValuePlotDescriptor descriptor, Vector value) {
-            String s = "0000000000000000000000000000000000000000000000000000000000000000" + Long.toBinaryString(value.getAsUnsignedLong());
-            return "0b" + s.substring(s.length() - value.getWidth());
+        public String render(ValuePlotDescriptor descriptor, Vector sample) {
+            String s = "0000000000000000000000000000000000000000000000000000000000000000" + Long.toBinaryString(sample.getAsUnsignedLong());
+            return "0b" + s.substring(s.length() - sample.getWidth());
         }
     }
 

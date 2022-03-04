@@ -26,12 +26,7 @@ public final class VectorSignalValuePlotSource implements ValuePlotSource {
     }
 
     @Override
-    public Object buildInitializerUpdate() {
-        return buildUpdate();
-    }
-
-    @Override
-    public Object buildUpdate() {
+    public Object buildSample() {
         return signal.getValue();
     }
 

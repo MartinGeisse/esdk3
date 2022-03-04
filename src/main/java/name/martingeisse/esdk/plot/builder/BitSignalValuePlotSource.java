@@ -19,12 +19,7 @@ public final class BitSignalValuePlotSource implements ValuePlotSource {
     }
 
     @Override
-    public Object buildInitializerUpdate() {
-        return buildUpdate();
-    }
-
-    @Override
-    public Object buildUpdate() {
+    public Object buildSample() {
         return signal.getValue();
     }
 

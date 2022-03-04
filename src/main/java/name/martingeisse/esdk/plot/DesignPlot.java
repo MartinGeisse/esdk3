@@ -43,15 +43,14 @@ import name.martingeisse.esdk.core.library.signal.VectorSignal;
  * Plot objects are immutable, but not value objects in general. That is, their identity does matter, and is
  * usually used for referencing.
  *
- * TODO remove initializer event!
+ * TODO rename valuePlotDescriptor to variablePlotDescriptor?
  */
 public final class DesignPlot {
 
     public final ImmutableList<ValuePlotDescriptor> valuePlotDescriptors;
-    public final Event initializer;
     public final ImmutableList<Event> events;
 
-    public DesignPlot(ImmutableList<ValuePlotDescriptor> valuePlotDescriptors, Event initializer, ImmutableList<Event> events) {
+    public DesignPlot(ImmutableList<ValuePlotDescriptor> valuePlotDescriptors, ImmutableList<Event> events) {
         if (valuePlotDescriptors == null) {
             throw new IllegalArgumentException("valuePlotDescriptors is null");
         }
@@ -60,10 +59,6 @@ public final class DesignPlot {
                 throw new IllegalArgumentException("valuePlotDescriptors contains null element");
             }
         }
-        if (initializer == null) {
-            throw new IllegalArgumentException("initializer is null");
-        }
-        initializer.validate(valuePlotDescriptors);
         if (events == null) {
             throw new IllegalArgumentException("events is null");
         }
@@ -74,7 +69,6 @@ public final class DesignPlot {
             event.validate(valuePlotDescriptors);
         }
         this.valuePlotDescriptors = valuePlotDescriptors;
-        this.initializer = initializer;
         this.events = events;
     }
 

@@ -4,6 +4,5 @@ import name.martingeisse.esdk.plot.ValuePlotDescriptor;
 
 public interface ValuePlotSource {
     ValuePlotDescriptor buildDescriptor();
-    Object buildInitializerUpdate();
-    Object buildUpdate();
+    Object buildSample();
 }
