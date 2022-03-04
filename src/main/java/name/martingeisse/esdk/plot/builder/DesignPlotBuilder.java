@@ -3,7 +3,7 @@ package name.martingeisse.esdk.plot.builder;
 import com.google.common.collect.ImmutableList;
 import name.martingeisse.esdk.plot.DesignPlot;
 import name.martingeisse.esdk.plot.Event;
-import name.martingeisse.esdk.plot.VariablePlotDescriptor;
+import name.martingeisse.esdk.plot.variable.VariablePlotDescriptor;
 
 import java.util.ArrayList;
 import java.util.List;

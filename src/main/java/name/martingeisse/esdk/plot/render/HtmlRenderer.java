@@ -1,8 +1,13 @@
 package name.martingeisse.esdk.plot.render;
 
 import com.google.common.html.HtmlEscapers;
+import name.martingeisse.esdk.core.util.MathUtil;
 import name.martingeisse.esdk.core.util.vector.Vector;
 import name.martingeisse.esdk.plot.*;
+import name.martingeisse.esdk.plot.variable.MemorySample;
+import name.martingeisse.esdk.plot.variable.NumberFormat;
+import name.martingeisse.esdk.plot.variable.VariablePlotDescriptor;
+import name.martingeisse.esdk.plot.variable.VectorFormat;
 
 import java.io.PrintWriter;
 
@@ -54,12 +59,30 @@ public class HtmlRenderer {
             out.print((Boolean) sample ? "1" : "0");
         } else if (descriptor instanceof VariablePlotDescriptor.Vector) {
             VectorFormat format = ((VariablePlotDescriptor.Vector) descriptor).format;
-            if (format == null) {
-                format = NumberFormat.DECIMAL;
-            }
             String text = format.render(descriptor, (Vector) sample);
             //noinspection UnstableApiUsage
             out.print(HtmlEscapers.htmlEscaper().escape(text));
+        } else if (descriptor instanceof VariablePlotDescriptor.Memory) {
+            VariablePlotDescriptor.Memory memoryDescriptor = (VariablePlotDescriptor.Memory)descriptor;
+            int addressBits = MathUtil.bitsNeededFor(memoryDescriptor.rowCount);
+            if (sample instanceof MemorySample.Full) {
+                // TODO render multiple values per line
+                MemorySample.Full fullSample = (MemorySample.Full)sample;
+                for (int i = 0; i < fullSample.values.size(); i++) {
+                    out.print(NumberFormat.HEXADECIMAL_PADDED.render(addressBits, i));
+                    out.print(": ");
+                    out.println(memoryDescriptor.rowFormat.render(descriptor, fullSample.values.get(i)));
+                }
+            } else if (sample instanceof MemorySample.Delta) {
+                MemorySample.Delta deltaSample = (MemorySample.Delta)sample;
+                for (MemorySample.Delta.RowPatch rowPatch : deltaSample.rowPatches) {
+                    out.print(NumberFormat.HEXADECIMAL_PADDED.render(addressBits, rowPatch.rowIndex));
+                    out.print(": ");
+                    out.println(memoryDescriptor.rowFormat.render(descriptor, rowPatch.value));
+                }
+            } else {
+                out.print("???");
+            }
         } else {
             out.print("???");
         }

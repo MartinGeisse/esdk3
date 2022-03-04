@@ -5,6 +5,7 @@ import name.martingeisse.esdk.core.library.clocked.Clock;
 import name.martingeisse.esdk.core.library.procedural.ProceduralMemory;
 import name.martingeisse.esdk.core.library.signal.BitSignal;
 import name.martingeisse.esdk.core.library.signal.VectorSignal;
+import name.martingeisse.esdk.plot.variable.VariablePlotDescriptor;
 
 /**
  * A design plot logs a user-defined set of variables as they change during a simulation, generating a variable plot

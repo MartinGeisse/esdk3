@@ -1,17 +1,13 @@
 package name.martingeisse.esdktest.designs;
 
-import com.google.common.collect.ImmutableMap;
 import name.martingeisse.esdk.core.component.Component;
 import name.martingeisse.esdk.core.library.clocked.Clock;
 import name.martingeisse.esdk.core.library.signal.BitSignal;
-import name.martingeisse.esdk.core.library.signal.VectorConstant;
 import name.martingeisse.esdk.core.library.signal.VectorSignal;
 import name.martingeisse.esdk.core.library.signal.connector.ClockConnector;
-import name.martingeisse.esdk.core.library.signal.operation.VectorComparison;
 import name.martingeisse.esdk.core.library.simulation.ClockGenerator;
 import name.martingeisse.esdk.core.library.simulation.SimulationTimeLimit;
-import name.martingeisse.esdk.plot.NamedVectorFormat;
-import name.martingeisse.esdk.plot.NumberFormat;
+import name.martingeisse.esdk.plot.variable.NamedVectorFormat;
 import name.martingeisse.esdk.plot.builder.BitSignalVariablePlotSource;
 import name.martingeisse.esdk.plot.builder.ClockedPlotter;
 import name.martingeisse.esdk.plot.builder.VectorSignalVariablePlotSource;

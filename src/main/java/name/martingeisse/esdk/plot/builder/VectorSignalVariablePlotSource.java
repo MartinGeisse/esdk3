@@ -1,8 +1,8 @@
 package name.martingeisse.esdk.plot.builder;
 
 import name.martingeisse.esdk.core.library.signal.VectorSignal;
-import name.martingeisse.esdk.plot.VariablePlotDescriptor;
-import name.martingeisse.esdk.plot.VectorFormat;
+import name.martingeisse.esdk.plot.variable.VariablePlotDescriptor;
+import name.martingeisse.esdk.plot.variable.VectorFormat;
 
 public final class VectorSignalVariablePlotSource implements VariablePlotSource {
 

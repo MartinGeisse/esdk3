@@ -1,7 +1,7 @@
 package name.martingeisse.esdk.plot.builder;
 
 import name.martingeisse.esdk.core.library.signal.BitSignal;
-import name.martingeisse.esdk.plot.VariablePlotDescriptor;
+import name.martingeisse.esdk.plot.variable.VariablePlotDescriptor;
 
 public final class BitSignalVariablePlotSource implements VariablePlotSource {
 

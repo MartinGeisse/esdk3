@@ -1,4 +1,4 @@
-package name.martingeisse.esdk.plot;
+package name.martingeisse.esdk.plot.variable;
 
 public abstract class VariablePlotDescriptor {
 
@@ -38,13 +38,13 @@ public abstract class VariablePlotDescriptor {
         public final VectorFormat format;
 
         public Vector(String name, int width) {
-            this(name, width, NumberFormat.DECIMAL);
+            this(name, width, null);
         }
 
         public Vector(String name, int width, VectorFormat format) {
             super(name);
             this.width = width;
-            this.format = format;
+            this.format = format == null ? NumberFormat.HEXADECIMAL_PADDED : format;
         }
 
         @Override
@@ -53,6 +53,29 @@ public abstract class VariablePlotDescriptor {
             checkValid(sample, sample instanceof name.martingeisse.esdk.core.util.vector.Vector);
             name.martingeisse.esdk.core.util.vector.Vector vectorSample = (name.martingeisse.esdk.core.util.vector.Vector)sample;
             checkValid(sample, vectorSample.getWidth() == this.width);
+        }
+
+    }
+
+    public static class Memory extends VariablePlotDescriptor {
+
+        public final int rowCount, columnCount;
+        public final VectorFormat rowFormat;
+
+        public Memory(String name, int rowCount, int columnCount) {
+            this(name, rowCount, columnCount, null);
+        }
+
+        public Memory(String name, int rowCount, int columnCount, VectorFormat rowFormat) {
+            super(name);
+            this.rowCount = rowCount;
+            this.columnCount = columnCount;
+            this.rowFormat = rowFormat == null ? NumberFormat.HEXADECIMAL_PADDED : rowFormat;
+        }
+
+        @Override
+        public void validateSample(Object sample) {
+            checkValid(sample, sample instanceof MemorySample);
         }
 
     }

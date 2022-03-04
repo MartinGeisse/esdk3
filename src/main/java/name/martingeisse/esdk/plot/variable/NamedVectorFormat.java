@@ -1,4 +1,4 @@
-package name.martingeisse.esdk.plot;
+package name.martingeisse.esdk.plot.variable;
 
 import com.google.common.collect.ImmutableMap;
 import name.martingeisse.esdk.core.util.vector.Vector;

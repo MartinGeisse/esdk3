@@ -1,6 +1,7 @@
 package name.martingeisse.esdk.plot;
 
 import com.google.common.collect.ImmutableList;
+import name.martingeisse.esdk.plot.variable.VariablePlotDescriptor;
 
 public final class Event {
 
