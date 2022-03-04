@@ -1,33 +1,49 @@
 package name.martingeisse.esdk.plot;
 
 import com.google.common.collect.ImmutableList;
+import name.martingeisse.esdk.core.library.clocked.Clock;
+import name.martingeisse.esdk.core.library.procedural.ProceduralMemory;
+import name.martingeisse.esdk.core.library.signal.BitSignal;
+import name.martingeisse.esdk.core.library.signal.VectorSignal;
 
 /**
- * Plot objects are immutable, but not value objects in general. That is, their identity does matter, and is
- * usually used for referencing.
+ * A design plot logs a user-defined set of variables as they change during a simulation, generating a value plot per
+ * variable.
  *
- * A plot is defined as a sequence of events, each of which carries a set of updates -- one update per value plot.
- * TODO rename updates to samples? more appropriate for signals, which is the main usage!
- * "update" -> "sample", "event" -> ???
- * No initializer is needed! Event with index 0 already samples the initial value, the first clock edge occurs
- * after that and loads the values that can be observed in the event with index 1.
- * ...
- * The initial values are defined through an initializer event that is treated the same way as other events with
- * respect to the updated values, but with special treatment in terms of timing. It is defined to happen before all
- * events, with no reference to a specific point in time, and does not take part in event numbering -- the first
- * event after the initializer, i.e. the first event in the events list, is event number 0. If affects the values as
- * follows: Before the initializer, all values are set to a pre-initialized value that depends on the value plot
- * descriptor, such as false for bit-typed plots and 0 for vector-typed plots. The initializer event is applied as
- * an update to this pre-initialized state to obtain the initialized state, just like later events are applied as
- * state updates to obtain the next state.
+ * Each value plot is defined by a value plot descriptor which contains the variable's data type as well as meta-data
+ * such as presentation hints and compression scheme.
+ *
+ * The variables' values are logged as a sequence of events, each of which carries a set of samples -- one sample per
+ * variable. An event corresponds to a single point in time, such as a specific point in a {@link Clock} cycle.
+ *
+ * Depending on the value plot descriptor, the meaning and/or presentation of a sample may be incremental, that is,
+ * only useful in combination with all preceding samples,  or non-incremental, i.e. useful on its own. This
+ * distinction can be made separately for storage and presentation, yielding four combinations:
+ * - stored and presented non-incremental: e.g. the value of a {@link BitSignal} or {@link VectorSignal}
+ * - stored incremental but presented non-incremental: the value of a {@link ProceduralMemory}, which is well-defined
+ *   at each single point in time but stored as incremental updates to reduce data size
+ * - stored and presented incremental: log messages generated from the system state that together form a readable log
+ * - stored non-incremental but presented incremental: this is a rare case, but may occur when a non-incremental
+ *   state (such as a {@link VectorSignal}) is more useful when presented as a sequence of deltas.
  *
  * The trigger that causes events and their values to be plotted defines how the timing of these events must be
  * interpreted. The common case is clock-triggered, which means that each event contains the values that are stable
  * at the end of a specific clock cycle, immediately before the next clock edge. This ensures that values stored in
  * registers correspond to the values when treating a register as a signal, and the values of derived signals are
- * consistent with register values, in the sense of the operators that define the derived signals. Value plots
- * that describe changes to the current state, as opposed to the current state itself, should be defined in a way
- * that is consistent with this definition.
+ * consistent with register values, in the sense of the operators that define the derived signals. Incremental
+ * value plots should be defined defined in a way that is consistent with this definition.
+ *
+ * There is no special handling for the initial state of a design. The above definitions imply that the first event
+ * occurs just before the first clock edge, so it will contain the initial values. To properly allow the initial values
+ * for incrementally-stored value plots to be stored in this first event, a pre-initialized state is define per
+ * type of value plot, such as (false) for bit signals, 0 for vector signals, and all-zero for memories. The
+ * initial state of the system, logged in the first event, can then be represented as an incremental update with
+ * respect to this pre-initialized state.
+ *
+ * Plot objects are immutable, but not value objects in general. That is, their identity does matter, and is
+ * usually used for referencing.
+ *
+ * TODO remove initializer event!
  */
 public final class DesignPlot {
 
