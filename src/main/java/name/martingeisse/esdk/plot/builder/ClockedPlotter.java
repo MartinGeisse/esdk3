@@ -11,17 +11,17 @@ public final class ClockedPlotter extends ClockedSimulationDesignItem {
 
     private final DesignPlotBuilder plotBuilder;
 
-    public ClockedPlotter(ClockSignal clockSignal, ValuePlotSource... valuePlotSources) {
-        this(clockSignal, ImmutableList.copyOf(valuePlotSources));
+    public ClockedPlotter(ClockSignal clockSignal, VariablePlotSource... variablePlotSources) {
+        this(clockSignal, ImmutableList.copyOf(variablePlotSources));
     }
 
-    public ClockedPlotter(ClockSignal clockSignal, List<ValuePlotSource> valuePlotSources) {
-        this(clockSignal, ImmutableList.copyOf(valuePlotSources));
+    public ClockedPlotter(ClockSignal clockSignal, List<VariablePlotSource> variablePlotSources) {
+        this(clockSignal, ImmutableList.copyOf(variablePlotSources));
     }
 
-    public ClockedPlotter(ClockSignal clockSignal, ImmutableList<ValuePlotSource> valuePlotSources) {
+    public ClockedPlotter(ClockSignal clockSignal, ImmutableList<VariablePlotSource> variablePlotSources) {
         super(clockSignal);
-        this.plotBuilder = new DesignPlotBuilder(valuePlotSources);
+        this.plotBuilder = new DesignPlotBuilder(variablePlotSources);
     }
 
     public DesignPlotBuilder getPlotBuilder() {

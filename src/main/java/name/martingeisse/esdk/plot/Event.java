@@ -13,13 +13,13 @@ public final class Event {
         this.samples = samples;
     }
 
-    public void validate(ImmutableList<ValuePlotDescriptor> valuePlotDescriptors) {
-        if (samples.size() != valuePlotDescriptors.size()) {
-            throw new IllegalArgumentException("invalid number of samples: " + samples.size() + " (expected " + valuePlotDescriptors.size() + ")");
+    public void validate(ImmutableList<VariablePlotDescriptor> variablePlotDescriptors) {
+        if (samples.size() != variablePlotDescriptors.size()) {
+            throw new IllegalArgumentException("invalid number of samples: " + samples.size() + " (expected " + variablePlotDescriptors.size() + ")");
         }
         int numberOfSamples = samples.size();
         for (int i = 0; i < numberOfSamples; i++) {
-            valuePlotDescriptors.get(i).validateSample(samples.get(i));
+            variablePlotDescriptors.get(i).validateSample(samples.get(i));
         }
     }
 

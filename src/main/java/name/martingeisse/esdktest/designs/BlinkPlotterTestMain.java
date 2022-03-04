@@ -4,14 +4,12 @@ import name.martingeisse.esdk.core.component.Component;
 import name.martingeisse.esdk.core.library.clocked.Clock;
 import name.martingeisse.esdk.core.library.signal.BitSignal;
 import name.martingeisse.esdk.core.library.signal.VectorSignal;
-import name.martingeisse.esdk.core.library.signal.connector.BitConnector;
 import name.martingeisse.esdk.core.library.signal.connector.ClockConnector;
 import name.martingeisse.esdk.core.library.simulation.ClockGenerator;
 import name.martingeisse.esdk.core.library.simulation.SimulationTimeLimit;
-import name.martingeisse.esdk.plot.ValuePlotDescriptor;
-import name.martingeisse.esdk.plot.builder.BitSignalValuePlotSource;
+import name.martingeisse.esdk.plot.builder.BitSignalVariablePlotSource;
 import name.martingeisse.esdk.plot.builder.ClockedPlotter;
-import name.martingeisse.esdk.plot.builder.VectorSignalValuePlotSource;
+import name.martingeisse.esdk.plot.builder.VectorSignalVariablePlotSource;
 import name.martingeisse.esdk.plot.render.HtmlRenderer;
 import name.martingeisse.esdktest.board.orange_crab.OrangeCrabDesign;
 
@@ -31,8 +29,8 @@ public class BlinkPlotterTestMain extends Component {
         blinkMain.clock.connect(clock);
 
         ClockedPlotter plotter = new ClockedPlotter(clock,
-            new VectorSignalValuePlotSource("counter", blinkMain.counter),
-            new BitSignalValuePlotSource("led", blinkMain.led)
+            new VectorSignalVariablePlotSource("counter", blinkMain.counter),
+            new BitSignalVariablePlotSource("led", blinkMain.led)
         );
 
         design.simulate();

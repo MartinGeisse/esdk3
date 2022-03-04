@@ -1,10 +1,10 @@
 package name.martingeisse.esdk.plot;
 
-public abstract class ValuePlotDescriptor {
+public abstract class VariablePlotDescriptor {
 
     public final String name;
 
-    private ValuePlotDescriptor(String name) {
+    private VariablePlotDescriptor(String name) {
         this.name = name;
     }
 
@@ -20,7 +20,7 @@ public abstract class ValuePlotDescriptor {
         throw new IllegalArgumentException("invalid sample for " + this + ": " + o);
     }
 
-    public static class Bit extends ValuePlotDescriptor {
+    public static class Bit extends VariablePlotDescriptor {
 
         public Bit(String name) {
             super(name);
@@ -32,7 +32,7 @@ public abstract class ValuePlotDescriptor {
         }
     }
 
-    public static class Vector extends ValuePlotDescriptor {
+    public static class Vector extends VariablePlotDescriptor {
 
         public final int width;
         public final VectorFormat format;
