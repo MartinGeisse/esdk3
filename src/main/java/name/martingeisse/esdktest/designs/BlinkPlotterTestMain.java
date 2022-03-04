@@ -1,5 +1,6 @@
 package name.martingeisse.esdktest.designs;
 
+import com.google.common.collect.ImmutableMap;
 import name.martingeisse.esdk.core.component.Component;
 import name.martingeisse.esdk.core.library.clocked.Clock;
 import name.martingeisse.esdk.core.library.signal.BitSignal;
@@ -7,11 +8,14 @@ import name.martingeisse.esdk.core.library.signal.VectorSignal;
 import name.martingeisse.esdk.core.library.signal.connector.ClockConnector;
 import name.martingeisse.esdk.core.library.simulation.ClockGenerator;
 import name.martingeisse.esdk.core.library.simulation.SimulationTimeLimit;
+import name.martingeisse.esdk.plot.NamedVectorFormat;
+import name.martingeisse.esdk.plot.NumberFormat;
 import name.martingeisse.esdk.plot.builder.BitSignalVariablePlotSource;
 import name.martingeisse.esdk.plot.builder.ClockedPlotter;
 import name.martingeisse.esdk.plot.builder.VectorSignalVariablePlotSource;
 import name.martingeisse.esdk.plot.render.HtmlRenderer;
 import name.martingeisse.esdktest.board.orange_crab.OrangeCrabDesign;
+import name.martingeisse.esdktest.designs.components.riscv.RiscvCpu;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -29,7 +33,14 @@ public class BlinkPlotterTestMain extends Component {
         blinkMain.clock.connect(clock);
 
         ClockedPlotter plotter = new ClockedPlotter(clock,
-            new VectorSignalVariablePlotSource("counter", blinkMain.counter),
+            // new VectorSignalVariablePlotSource("counter", blinkMain.counter),
+            // new VectorSignalVariablePlotSource("counter", blinkMain.counter, NumberFormat.HEXADECIMAL_PADDED),
+//            new VectorSignalVariablePlotSource("counter", blinkMain.counter, new NamedVectorFormat(ImmutableMap.of(
+//                1L, "foo"
+//            ))),
+            new VectorSignalVariablePlotSource("counter", blinkMain.counter,
+                NamedVectorFormat.fromStaticFieldsWithNameFilter(RiscvCpu.class, name -> name.startsWith("STATE_"))
+            ),
             new BitSignalVariablePlotSource("led", blinkMain.led)
         );
 

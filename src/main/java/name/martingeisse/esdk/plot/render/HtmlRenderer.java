@@ -1,5 +1,6 @@
 package name.martingeisse.esdk.plot.render;
 
+import com.google.common.html.HtmlEscapers;
 import name.martingeisse.esdk.core.util.vector.Vector;
 import name.martingeisse.esdk.plot.*;
 
@@ -56,7 +57,9 @@ public class HtmlRenderer {
             if (format == null) {
                 format = NumberFormat.DECIMAL;
             }
-            out.print(format.render(descriptor, (Vector) sample));
+            String text = format.render(descriptor, (Vector) sample);
+            //noinspection UnstableApiUsage
+            out.print(HtmlEscapers.htmlEscaper().escape(text));
         } else {
             out.print("???");
         }
