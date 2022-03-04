@@ -39,7 +39,7 @@ public class CharacterDisplayHelloWorldMain extends Component {
         design.createOutputPin(OrangeCrabIoPins.MOSI, characterDisplay.hsync, Ecp5IoType.LVCMOS33, null);
         design.createOutputPin(OrangeCrabIoPins.MISO, characterDisplay.vsync, Ecp5IoType.LVCMOS33, null);
 
-        design.implement("CharacterDisplayHelloWorld", new File("implement/CharacterDisplayHelloWorld"), true);
+        design.implement("CharacterDisplayHelloWorld", new File("output/CharacterDisplayHelloWorld"), true);
     }
 
 }
