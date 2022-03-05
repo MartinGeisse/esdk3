@@ -26,11 +26,17 @@ public class HtmlRenderer {
     }
 
     public void beginDocument() {
-        out.println("<html><head><style type=\"text/css\">");
+        out.println("<html><head>");
+
+        out.println("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"/>");
+
+        out.println("<style type=\"text/css\">");
         out.println("table {border-collapse: collapse}");
         out.println("th {padding: 5px 10px; text-align: center;}");
         out.println("td {border: 1px solid #444; padding: 5px 10px; text-align: center;}");
-        out.println("</style></head><body>");
+        out.println("</style>");
+
+        out.println("</head><body>");
     }
 
     public void endDocument() {
@@ -71,14 +77,14 @@ public class HtmlRenderer {
                 for (int i = 0; i < fullSample.values.size(); i++) {
                     out.print(NumberFormat.HEXADECIMAL_PADDED.render(addressBits, i));
                     out.print(": ");
-                    out.println(memoryDescriptor.rowFormat.render(descriptor, fullSample.values.get(i)));
+                    out.println(memoryDescriptor.rowFormat.render(descriptor, fullSample.values.get(i)) + "<br/>");
                 }
             } else if (sample instanceof MemorySample.Delta) {
                 MemorySample.Delta deltaSample = (MemorySample.Delta)sample;
                 for (MemorySample.Delta.RowPatch rowPatch : deltaSample.rowPatches) {
                     out.print(NumberFormat.HEXADECIMAL_PADDED.render(addressBits, rowPatch.rowIndex));
                     out.print(": ");
-                    out.println(memoryDescriptor.rowFormat.render(descriptor, rowPatch.value));
+                    out.println(memoryDescriptor.rowFormat.render(descriptor, rowPatch.value) + "<br/>");
                 }
             } else {
                 out.print("???");

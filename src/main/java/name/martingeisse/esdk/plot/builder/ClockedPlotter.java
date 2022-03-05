@@ -10,6 +10,7 @@ import name.martingeisse.esdk.core.library.simulation.ClockedSimulationDesignIte
 import name.martingeisse.esdk.plot.DesignPlot;
 import name.martingeisse.esdk.plot.variable.VectorFormat;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -27,7 +28,7 @@ public final class ClockedPlotter extends ClockedSimulationDesignItem {
     // construction time
     private BitSignal startSignal = new BitConstant(true);
     private BitSignal stopSignal = new BitConstant(false);
-    private List<VariablePlotSource> variablePlotSources;
+    private List<VariablePlotSource> variablePlotSources = new ArrayList<>();
 
     // simulation time
     private boolean started = false;
@@ -78,6 +79,10 @@ public final class ClockedPlotter extends ClockedSimulationDesignItem {
 
     public void addSource(String name, ProceduralMemory memory, VectorFormat format) {
         variablePlotSources.add(new MemoryVariablePlotSource(name, memory, format));
+    }
+
+    public void addSource(String name, Plottable plottable) {
+        plottable.addSources(this, name);
     }
 
     // ----------------------------------------------------------------------------------------------------------------
