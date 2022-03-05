@@ -1,11 +1,14 @@
 package name.martingeisse.esdk.plot.builder;
 
 import com.google.common.collect.ImmutableList;
+import name.martingeisse.esdk.core.library.procedural.ProceduralMemory;
 import name.martingeisse.esdk.core.library.signal.BitConstant;
 import name.martingeisse.esdk.core.library.signal.BitSignal;
 import name.martingeisse.esdk.core.library.signal.ClockSignal;
+import name.martingeisse.esdk.core.library.signal.VectorSignal;
 import name.martingeisse.esdk.core.library.simulation.ClockedSimulationDesignItem;
 import name.martingeisse.esdk.plot.DesignPlot;
+import name.martingeisse.esdk.plot.variable.VectorFormat;
 
 import java.util.List;
 
@@ -21,27 +24,18 @@ import java.util.List;
  */
 public final class ClockedPlotter extends ClockedSimulationDesignItem {
 
-    private final DesignPlotBuilder plotBuilder;
+    // construction time
     private BitSignal startSignal = new BitConstant(true);
-    private boolean started = false;
     private BitSignal stopSignal = new BitConstant(false);
+    private List<VariablePlotSource> variablePlotSources;
+
+    // simulation time
+    private boolean started = false;
     private boolean stopped = false;
+    private DesignPlotBuilder plotBuilder;
 
-    public ClockedPlotter(ClockSignal clockSignal, VariablePlotSource... variablePlotSources) {
-        this(clockSignal, ImmutableList.copyOf(variablePlotSources));
-    }
-
-    public ClockedPlotter(ClockSignal clockSignal, List<VariablePlotSource> variablePlotSources) {
-        this(clockSignal, ImmutableList.copyOf(variablePlotSources));
-    }
-
-    public ClockedPlotter(ClockSignal clockSignal, ImmutableList<VariablePlotSource> variablePlotSources) {
+    public ClockedPlotter(ClockSignal clockSignal) {
         super(clockSignal);
-        this.plotBuilder = new DesignPlotBuilder(variablePlotSources);
-    }
-
-    public DesignPlotBuilder getPlotBuilder() {
-        return plotBuilder;
     }
 
     public BitSignal getStartSignal() {
@@ -61,6 +55,38 @@ public final class ClockedPlotter extends ClockedSimulationDesignItem {
     }
 
     // ----------------------------------------------------------------------------------------------------------------
+
+    public void addSource(VariablePlotSource variablePlotSource) {
+        variablePlotSources.add(variablePlotSource);
+    }
+
+    public void addSource(String name, BitSignal signal) {
+        variablePlotSources.add(new BitSignalVariablePlotSource(name, signal));
+    }
+
+    public void addSource(String name, VectorSignal signal) {
+        variablePlotSources.add(new VectorSignalVariablePlotSource(name, signal));
+    }
+
+    public void addSource(String name, VectorSignal signal, VectorFormat format) {
+        variablePlotSources.add(new VectorSignalVariablePlotSource(name, signal, format));
+    }
+
+    public void addSource(String name, ProceduralMemory memory) {
+        variablePlotSources.add(new MemoryVariablePlotSource(name, memory));
+    }
+
+    public void addSource(String name, ProceduralMemory memory, VectorFormat format) {
+        variablePlotSources.add(new MemoryVariablePlotSource(name, memory, format));
+    }
+
+    // ----------------------------------------------------------------------------------------------------------------
+
+    @Override
+    protected void initializeSimulation() {
+        this.plotBuilder = new DesignPlotBuilder(ImmutableList.copyOf(variablePlotSources));
+        this.variablePlotSources = null;
+    }
 
     @Override
     public void computeNextState() {

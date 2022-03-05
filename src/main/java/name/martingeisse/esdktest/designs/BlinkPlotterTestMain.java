@@ -7,11 +7,9 @@ import name.martingeisse.esdk.core.library.signal.VectorSignal;
 import name.martingeisse.esdk.core.library.signal.connector.ClockConnector;
 import name.martingeisse.esdk.core.library.simulation.ClockGenerator;
 import name.martingeisse.esdk.core.library.simulation.SimulationTimeLimit;
-import name.martingeisse.esdk.plot.variable.NamedVectorFormat;
-import name.martingeisse.esdk.plot.builder.BitSignalVariablePlotSource;
 import name.martingeisse.esdk.plot.builder.ClockedPlotter;
-import name.martingeisse.esdk.plot.builder.VectorSignalVariablePlotSource;
 import name.martingeisse.esdk.plot.render.HtmlRenderer;
+import name.martingeisse.esdk.plot.variable.NamedVectorFormat;
 import name.martingeisse.esdktest.board.orange_crab.OrangeCrabDesign;
 import name.martingeisse.esdktest.designs.components.riscv.RiscvCpu;
 
@@ -30,17 +28,16 @@ public class BlinkPlotterTestMain extends Component {
 
         blinkMain.clock.connect(clock);
 
-        ClockedPlotter plotter = new ClockedPlotter(clock,
+        ClockedPlotter plotter = new ClockedPlotter(clock);
             // new VectorSignalVariablePlotSource("counter", blinkMain.counter),
             // new VectorSignalVariablePlotSource("counter", blinkMain.counter, NumberFormat.HEXADECIMAL_PADDED),
 //            new VectorSignalVariablePlotSource("counter", blinkMain.counter, new NamedVectorFormat(ImmutableMap.of(
 //                1L, "foo"
 //            ))),
-            new VectorSignalVariablePlotSource("counter", blinkMain.counter,
+        plotter.addSource("counter", blinkMain.counter,
                 NamedVectorFormat.fromStaticFieldsWithNameFilter(RiscvCpu.class, name -> name.startsWith("STATE_"))
-            ),
-            new BitSignalVariablePlotSource("led", blinkMain.led)
         );
+        plotter.addSource("led", blinkMain.led);
 
         design.simulate();
 
