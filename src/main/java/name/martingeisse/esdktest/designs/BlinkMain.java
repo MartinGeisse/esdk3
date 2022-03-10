@@ -22,7 +22,7 @@ public class BlinkMain extends Component {
         design.createLedGreenPin(blinkMain.g);
         design.createLedBluePin(blinkMain.b);
 
-        design.implement("ColorBlink", new File("implement/ColorBlink"), true);
+        design.implement("ColorBlink", new File("output/ColorBlink"), true);
     }
 
     public final ClockConnector clock = inClock();

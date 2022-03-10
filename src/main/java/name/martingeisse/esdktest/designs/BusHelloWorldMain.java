@@ -147,7 +147,7 @@ public class BusHelloWorldMain extends Component {
         // implement this design!
         //
 
-        design.implement("CharacterDisplayHelloWorld", new File("implement/CharacterDisplayHelloWorld"), true);
+        design.implement("CharacterDisplayHelloWorld", new File("output/CharacterDisplayHelloWorld"), true);
     }
 
     public static class Writer extends Component {

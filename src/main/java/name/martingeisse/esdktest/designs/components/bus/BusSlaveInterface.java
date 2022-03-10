@@ -4,8 +4,10 @@ import name.martingeisse.esdk.core.component.Component;
 import name.martingeisse.esdk.core.library.signal.*;
 import name.martingeisse.esdk.core.library.signal.connector.BitConnector;
 import name.martingeisse.esdk.core.library.signal.connector.VectorConnector;
+import name.martingeisse.esdk.plot.builder.ClockedPlotter;
+import name.martingeisse.esdk.plot.builder.Plottable;
 
-public final class BusSlaveInterface {
+public final class BusSlaveInterface implements Plottable {
 
     public final BitConnector enable;
     public final BitConnector write;
@@ -48,6 +50,16 @@ public final class BusSlaveInterface {
         wordAddress.connect(new VectorConstant(wordAddress.getWidth(), 0));
         writeData.connect(new VectorConstant(writeData.getWidth(), 0));
         writeMask.connect(new VectorConstant(4, 0));
+    }
+
+    public void addSources(ClockedPlotter plotter, String name) {
+        plotter.addSource(name + ".enable", enable);
+        plotter.addSource(name + ".write", write);
+        plotter.addSource(name + ".acknowledge", acknowledge);
+        plotter.addSource(name + ".wordAddress", wordAddress);
+        plotter.addSource(name + ".writeData", writeData);
+        plotter.addSource(name + ".writeMask", writeMask);
+        plotter.addSource(name + ".readData", readData);
     }
 
 }

@@ -28,10 +28,20 @@ public final class Matrix {
 	private final Vector defaultRowValue;
 
 	public Matrix(int rowCount, int columnCount) {
+		this(rowCount, columnCount, Vector.of(columnCount, 0));
+	}
+
+	public Matrix(int rowCount, int columnCount, Vector fillValue) {
 		this.rowCount = rowCount;
 		this.columnCount = columnCount;
 		this.rows = new Vector[rowCount];
-		this.defaultRowValue = Vector.of(columnCount, 0);
+		this.defaultRowValue = fillValue;
+	}
+
+	@SuppressWarnings("CopyConstructorMissesField")
+	public Matrix(Matrix other) {
+		this(other.rowCount, other.columnCount, other.defaultRowValue);
+		System.arraycopy(other.rows, 0, this.rows, 0, rowCount);
 	}
 
 	public int getRowCount() {

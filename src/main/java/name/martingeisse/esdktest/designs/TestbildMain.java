@@ -42,7 +42,7 @@ public class TestbildMain extends Component {
         design.createOutputPin(OrangeCrabIoPins.MOSI, testbild.hsync, Ecp5IoType.LVCMOS33, null);
         design.createOutputPin(OrangeCrabIoPins.MISO, testbild.vsync, Ecp5IoType.LVCMOS33, null);
 
-        design.implement("Testbild", new File("implement/Testbild"), true);
+        design.implement("Testbild", new File("output/Testbild"), true);
     }
 
     public final ClockConnector clock = inClock();
