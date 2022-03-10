@@ -31,6 +31,14 @@ public class ComplianceTestingDesign extends Design {
         toplevel.memory.loadContents(file);
     }
 
+    /**
+     * This address is not needed to get the outputs -- getOutput() is sufficient for that. However, this start
+     * address gets printed by the caller in addition to the outputs since it makes tracking down problems much easier.
+     */
+    public int getOutputStartAddress() {
+        return toplevel.controlDevice.complianceDataBegin;
+    }
+
     public int[] getOutput() {
         int begin = toplevel.controlDevice.complianceDataBegin >> 2;
         int end = toplevel.controlDevice.complianceDataEnd >> 2;

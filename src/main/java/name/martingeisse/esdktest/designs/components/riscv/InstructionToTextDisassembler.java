@@ -19,6 +19,7 @@ public class InstructionToTextDisassembler {
 
     public void disassemble(VectorSignal signal) {
         disassemble(signal.getValue());
+        out.flush();
     }
 
     public void disassemble(Vector instruction) {
@@ -26,6 +27,7 @@ public class InstructionToTextDisassembler {
             throw new IllegalArgumentException("argument has wrong width: " + instruction.getWidth() + " (expected 32)");
         }
         disassemble(instruction.getAsSignedInt());
+        out.flush();
     }
 
     public void disassemble(int instruction) {
@@ -33,7 +35,7 @@ public class InstructionToTextDisassembler {
         switch (opcode) {
 
             case 0b0000011:
-                out.print("TODO LOAD");
+                disassembleLoad(instruction);
                 break;
 
             case 0b0000111:
@@ -53,7 +55,7 @@ public class InstructionToTextDisassembler {
                 break;
 
             case 0b0010111:
-                out.print("TODO AUIPC");
+                printUiInstruction("auipc", instruction);
                 break;
 
             case 0b0011011:
@@ -63,7 +65,7 @@ public class InstructionToTextDisassembler {
             // case 0b0011111: -- handle as invalid opcode in default branch
 
             case 0b0100011:
-                out.print("TODO STORE");
+                disassembleStore(instruction);
                 break;
 
             case 0b0100111:
@@ -83,7 +85,7 @@ public class InstructionToTextDisassembler {
                 break;
 
             case 0b0110111:
-                out.print("TODO LUI");
+                printUiInstruction("lui", instruction);
                 break;
 
             case 0b0111011:
@@ -146,6 +148,7 @@ public class InstructionToTextDisassembler {
                 out.print("invalid opcode: " + toBinaryString(opcode, 7));
                 break;
         }
+        out.flush();
     }
 
     // ----------------------------------------------------------------------------------------------------------------
@@ -163,7 +166,7 @@ public class InstructionToTextDisassembler {
 
             case 0:
                 if (isOpImm) {
-                    printOp("addi", instruction);
+                    printOpImm("addi", instruction);
                 } else if (bit30) {
                     printOp("sub", instruction);
                 } else {
@@ -181,7 +184,7 @@ public class InstructionToTextDisassembler {
 
             case 2:
                 if (isOpImm) {
-                    printShiftOpImm("slti", instruction);
+                    printOpImm("slti", instruction);
                 } else {
                     printOp("slt", instruction);
                 }
@@ -189,7 +192,7 @@ public class InstructionToTextDisassembler {
 
             case 3:
                 if (isOpImm) {
-                    printShiftOpImm("sltiu", instruction);
+                    printOpImm("sltiu", instruction);
                 } else {
                     printOp("sltu", instruction);
                 }
@@ -197,7 +200,7 @@ public class InstructionToTextDisassembler {
 
             case 4:
                 if (isOpImm) {
-                    printShiftOpImm("xori", instruction);
+                    printOpImm("xori", instruction);
                 } else {
                     printOp("xor", instruction);
                 }
@@ -206,9 +209,9 @@ public class InstructionToTextDisassembler {
             case 5:
                 if (isOpImm) {
                     if (bit30) {
-                        printOp("srai", instruction);
+                        printShiftOpImm("srai", instruction);
                     } else {
-                        printOp("srli", instruction);
+                        printShiftOpImm("srli", instruction);
                     }
                 } else {
                     if (bit30) {
@@ -221,7 +224,7 @@ public class InstructionToTextDisassembler {
 
             case 6:
                 if (isOpImm) {
-                    printShiftOpImm("ori", instruction);
+                    printOpImm("ori", instruction);
                 } else {
                     printOp("or", instruction);
                 }
@@ -229,7 +232,7 @@ public class InstructionToTextDisassembler {
 
             case 7:
                 if (isOpImm) {
-                    printShiftOpImm("andi", instruction);
+                    printOpImm("andi", instruction);
                 } else {
                     printOp("and", instruction);
                 }
@@ -251,6 +254,70 @@ public class InstructionToTextDisassembler {
 
     protected void printShiftOpImm(String mnemonic, int instruction) {
         out.print(mnemonic + " x" + getRdField(instruction) + ", x" + getRs1Field(instruction) + ", " + getShiftAmountField(instruction));
+    }
+
+    protected void printUiInstruction(String mnemonic, int instruction) {
+        out.print(mnemonic + " x" + getRdField(instruction) + ", " + getUiField(instruction));
+    }
+
+    protected void disassembleLoad(int instruction) {
+        int dataRegister = getRdField(instruction);
+        int offset = getOpImmediateField(instruction);
+        int addressRegister = getRs1Field(instruction);
+        int width = getFunct3Field(instruction);
+        switch (width) {
+
+            case 0:
+                printLoadStore("lb", dataRegister, offset, addressRegister);
+                break;
+
+            case 1:
+                printLoadStore("lh", dataRegister, offset, addressRegister);
+                break;
+
+            case 2:
+                printLoadStore("lw", dataRegister, offset, addressRegister);
+                break;
+
+            case 4:
+                printLoadStore("lbu", dataRegister, offset, addressRegister);
+                break;
+
+            case 5:
+                printLoadStore("lhu", dataRegister, offset, addressRegister);
+                break;
+
+            default:
+                printLoadStore("load-unknown-size", dataRegister, offset, addressRegister);
+                break;
+
+        }
+    }
+
+    protected void disassembleStore(int instruction) {
+        int dataRegister = getRs2Field(instruction);
+        int offset = ((instruction & 0xfe000000) >> 20) | ((instruction >> 7) & 31);
+        int addressRegister = getRs1Field(instruction);
+        int width = getFunct3Field(instruction);
+        switch (width) {
+
+            case 0:
+                printLoadStore("sb", dataRegister, offset, addressRegister);
+                break;
+
+            case 1:
+                printLoadStore("sh", dataRegister, offset, addressRegister);
+                break;
+
+            case 2:
+                printLoadStore("sw", dataRegister, offset, addressRegister);
+                break;
+
+        }
+    }
+
+    protected void printLoadStore(String mnemonic, int dataRegister, int offset, int addressRegister) {
+        out.print(mnemonic + " x" + dataRegister + ", " + offset + "(x" + addressRegister + ")");
     }
 
     // ----------------------------------------------------------------------------------------------------------------
@@ -283,6 +350,14 @@ public class InstructionToTextDisassembler {
 
     protected final int getRs2Field(int instruction) {
         return (instruction >> 20) & 31;
+    }
+
+    protected final int getUiField(int instruction) {
+        return (instruction >>> 12);
+    }
+
+    protected final int getUiFieldPrescaled(int instruction) {
+        return instruction & 0xfffff000;
     }
 
     protected final boolean getBit(int instruction, int index) {

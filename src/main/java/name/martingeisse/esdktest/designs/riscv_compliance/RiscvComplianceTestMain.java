@@ -139,6 +139,7 @@ public class RiscvComplianceTestMain {
         design.simulate();
 
         // verify the outputs
+        int outputStartAddress = design.getOutputStartAddress();
         int[] output = design.getOutput();
         LineIterator lineIterator = FileUtils.lineIterator(referenceFile);
         for (int actualValue : output) {
@@ -151,7 +152,8 @@ public class RiscvComplianceTestMain {
             }
             int expectedValue = (int)expectedValueLong;
             if (actualValue != expectedValue) {
-                throw new RuntimeException("expected value " + Long.toHexString(expectedValue & 0xffffffffL) +
+                throw new RuntimeException("output address " + Long.toHexString(outputStartAddress & 0xffffffffL) +
+                    ": expected value " + Long.toHexString(expectedValue & 0xffffffffL) +
                     ", actual value " + Long.toHexString(actualValue & 0xffffffffL));
             }
         }
